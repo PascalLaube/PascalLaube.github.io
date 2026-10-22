@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sampling-Labor · VL 02 · Cloud-native AI</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--lila:#6d28d9;--dunkel:#2e1065;--hell:#f5f3ff;--rand:#ddd6fe;--orange:#e65100;--grau:#64748b;--text:#1a2733}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#faf8ff;color:var(--text);line-height:1.5}
+  header{background:var(--dunkel);color:#fff;padding:1.4rem 1rem}
+  header .in{max-width:1100px;margin:0 auto}
+  header h1{font-size:1.6rem}
+  header p{color:#c4b5fd;margin-top:.3rem}
+  main{max-width:1100px;margin:0 auto;padding:1.2rem 1rem 3rem}
+  h2{color:var(--dunkel);font-size:1.25rem;margin:1.6rem 0 .6rem}
+  .karte{background:#fff;border:1px solid var(--rand);border-left:5px solid var(--lila);border-radius:10px;padding:1rem 1.1rem;margin:.8rem 0}
+  .karte.orange{border-left-color:var(--orange);background:#fffaf5}
+  .labor{display:grid;grid-template-columns:320px 1fr;gap:1.2rem}
+  @media (max-width:800px){.labor{grid-template-columns:1fr}}
+  label{display:block;font-weight:600;margin-top:.9rem;color:var(--dunkel)}
+  label .wert{float:right;color:var(--lila);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--lila)}
+  select{width:100%;padding:.45rem;border:1px solid var(--rand);border-radius:6px;font-size:1rem;margin-top:.3rem}
+  .kontext{font-size:1.15rem;margin:.2rem 0 .8rem;color:var(--dunkel)}
+  .kontext b{background:#fde68a;padding:0 .3rem;border-radius:4px}
+  .zeile{display:grid;grid-template-columns:120px 1fr 64px 52px;align-items:center;gap:.5rem;margin:.28rem 0;font-size:.95rem}
+  .zeile .tok{text-align:right;font-family:Consolas,monospace}
+  .zeile .spur{background:#f1f5f9;border-radius:4px;height:22px;position:relative;overflow:hidden}
+  .zeile .spur,.zeile .balken{display:block}
+  .zeile .balken{height:100%;background:var(--lila);border-radius:4px;transition:width .25s}
+  .zeile.raus .balken{background:#cbd5e1}
+  .zeile.raus .tok{color:#94a3b8;text-decoration:line-through}
+  .zeile .p{text-align:right;font-variant-numeric:tabular-nums;color:var(--grau)}
+  .zeile .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--orange)}
+  .knoepfe{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+  button{background:var(--lila);color:#fff;border:none;border-radius:6px;padding:.5rem .9rem;font-size:.95rem;cursor:pointer}
+  button.zweit{background:#fff;color:var(--lila);border:1px solid var(--lila)}
+  button:hover{filter:brightness(1.1)}
+  .ziehung{margin-top:1rem;font-size:1.05rem;min-height:1.6em}
+  .ziehung b{color:var(--orange);font-size:1.25rem}
+  .info{font-size:.9rem;color:var(--grau);margin-top:.5rem}
+  .aufgabe{background:#fff;border:1px solid var(--rand);border-radius:10px;padding:1rem 1.1rem;margin:.8rem 0}
+  .aufgabe h3{font-size:1.05rem;color:var(--dunkel);margin-bottom:.4rem}
+  .aufgabe .zeit{float:right;font-size:.85rem;color:var(--grau);font-weight:400}
+  .aufgabe ol,.aufgabe ul{margin:.3rem 0 .3rem 1.3rem}
+  textarea{width:100%;min-height:70px;margin-top:.5rem;padding:.5rem;border:1px solid var(--rand);border-radius:6px;font:inherit;font-size:.95rem;resize:vertical}
+  code{background:#ede9fe;padding:0 .3rem;border-radius:3px;font-family:Consolas,monospace;font-size:.92em}
+  a{color:var(--lila)}
+  .hinweis{font-size:.88rem;color:var(--grau)}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>🎲 Sampling-Labor</h1>
+  <p>VL 02 · Foundation Models verstehen · Cloud-native AI · WS 2026/27</p>
+</div></header>
+<main>
+
+<div class="karte">
+  <strong>So funktioniert das Labor:</strong> Links wählt ihr eine Situation und stellt Temperature, Top-k und Top-p ein. Rechts seht ihr die Wahrscheinlichkeiten für das nächste Token. Ausgegraute Tokens hat Top-k oder Top-p gestrichen. Mit <em>Ziehen</em> wählt das Labor ein Token aus, genau wie ein Sprachmodell. Die Logits sind ausgedachte, aber realistische Beispielwerte.
+  <br><br>Danach wechselt ihr in <a href="https://aistudio.google.com" target="_blank" rel="noopener">Google AI Studio</a> und prüft dasselbe an einem echten Modell. Eure Antworten schreibt ihr in die Felder unten. Sie bleiben nur in diesem Browser gespeichert.
+</div>
+
+<h2>🔬 Das Labor</h2>
+<div class="labor">
+  <div class="karte">
+    <label for="szenario">Situation</label>
+    <select id="szenario"></select>
+    <label for="temp">Temperature <span class="wert" id="tempWert"></span></label>
+    <input type="range" id="temp" min="0" max="2" step="0.05" value="1">
+    <label for="topk">Top-k <span class="wert" id="topkWert"></span></label>
+    <input type="range" id="topk" min="1" max="10" step="1" value="10">
+    <label for="topp">Top-p <span class="wert" id="toppWert"></span></label>
+    <input type="range" id="topp" min="0.05" max="1" step="0.05" value="1">
+    <div class="knoepfe">
+      <button id="eins">1× ziehen</button>
+      <button id="hundert">100× ziehen</button>
+      <button class="zweit" id="reset">Zählung löschen</button>
+      <button class="zweit" id="standard">Standardwerte</button>
+    </div>
+    <p class="info">Temperature 0 bedeutet: immer das wahrscheinlichste Token (Greedy).</p>
+  </div>
+  <div class="karte">
+    <div class="kontext" id="kontext"></div>
+    <div id="verteilung"></div>
+    <div class="ziehung" id="ziehung"></div>
+    <p class="info" id="statistik"></p>
+  </div>
+</div>
+
+<h2>📝 Teil A · Im Labor <span class="hinweis">(ca. 15 Minuten)</span></h2>
+
+<div class="aufgabe">
+  <h3>A1 · Was die Temperature macht <span class="zeit">5 Min</span></h3>
+  <p>Situation <em>Mensa</em>. Stellt Top-k auf 10 und Top-p auf 1,0. Zieht jeweils 100-mal bei Temperature 0,2, 1,0 und 2,0 (vorher die Zählung löschen).</p>
+  <ol><li>Wie viele <strong>verschiedene</strong> Tokens kommen jeweils vor?</li><li>Ab welcher Temperature taucht „Einhorn“ auf?</li><li>Welche Temperature würdet ihr für einen Speiseplan-Generator wählen, welche für einen kreativen Namensvorschlag?</li></ol>
+  <textarea data-key="a1" placeholder="Eure Antwort …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <h3>A2 · Warum der Assistent manchmal Falsches sagt <span class="zeit">5 Min</span></h3>
+  <p>Situation <em>HTWG</em>. Die richtige Fortsetzung ist „staatliche“.</p>
+  <ol><li>Wie oft kommt bei Temperature 1,0 in 100 Ziehungen „private“ vor?</li><li>Was passiert bei Temperature 0? Ist die Antwort damit „richtig“, oder nur zuverlässig?</li><li>Erklärt in zwei Sätzen, warum ein Modell, das die richtige Antwort „kennt“, trotzdem manchmal die falsche gibt.</li></ol>
+  <textarea data-key="a2" placeholder="Eure Antwort …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <h3>A3 · Top-k gegen Top-p <span class="zeit">5 Min</span></h3>
+  <p>Temperature 1,0. Stellt Top-p auf 0,9.</p>
+  <ol><li>Wie viele Tokens bleiben in der Situation <em>Ja oder Nein</em> übrig, wie viele bei <em>Mensa</em>?</li><li>Welchen Top-k-Wert bräuchtet ihr, um in beiden Situationen dasselbe zu erreichen? Geht das überhaupt mit einem einzigen Wert?</li><li>Was ist Top-k = 1?</li></ol>
+  <textarea data-key="a3" placeholder="Eure Antwort …"></textarea>
+</div>
+
+<h2>🌐 Teil B · In Google AI Studio <span class="hinweis">(ca. 15 Minuten)</span></h2>
+
+<div class="karte orange">
+  Öffnet <a href="https://aistudio.google.com" target="_blank" rel="noopener">aistudio.google.com</a> und meldet euch mit einem Google-Konto an. Wer kein Google-Konto nutzen möchte, arbeitet zu zweit an einem Laptop mit. Rechts in den <strong>Run settings</strong> wählt ihr das Modell und stellt die <strong>Temperature</strong> ein, <strong>Top P</strong> findet ihr unter den erweiterten Einstellungen. Notiert, welches Modell ihr nutzt. Startet für jede Anfrage einen <strong>neuen Chat</strong>, sonst sieht das Modell die vorigen Antworten.
+  <br><br><span class="hinweis">Gebt dort keine persönlichen Daten ein. Die Prompts in diesen Aufgaben sind unkritisch. Wenn die <a href="https://chat-ai.academiccloud.de" target="_blank" rel="noopener">Academic Cloud</a> wieder läuft, könnt ihr die Aufgaben auch dort machen, mit eurem HTWG-Account.</span>
+</div>
+
+<div class="aufgabe">
+  <h3>B1 · Streuung an einem echten Modell <span class="zeit">5 Min</span></h3>
+  <p>Fragt dreimal mit Temperature 0 und dreimal mit Temperature 1,5: <code>Erfinde einen Namen für ein neues Gericht in der Mensa. Nur den Namen.</code></p>
+  <p>Wie viele verschiedene Namen bekommt ihr? Passt das zu Teil A?</p>
+  <textarea data-key="b1" placeholder="Eure Antworten …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <h3>B2 · Die Frage aus VL 1 <span class="zeit">5 Min</span></h3>
+  <p>Fragt mehrmals in neuen Chats: <code>Ist die HTWG Konstanz eine private oder eine staatliche Hochschule? Antworte mit einem Satz.</code> Probiert ein kleines Modell (z. B. ein Gemma-Modell) und ein großes (z. B. ein Gemini-Modell).</p>
+  <p>Notiert die Antworten. Wenn ein Modell danebenliegt: Liegt das am Sampling, an den Trainingsdaten oder an beidem?</p>
+  <textarea data-key="b2" placeholder="Eure Antworten …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <h3>B3 · Strukturierte Ausgabe nur per Prompt <span class="zeit">5 Min</span></h3>
+  <p>Schickt folgenden Prompt und prüft die Antwort:</p>
+  <p><code>Ordne diese Mail ein und antworte NUR mit JSON mit den Feldern anliegen (pruefung, mensa, bibliothek oder sonstiges), studiengang und frist: "Hi, ich bin im 3. Semester AIN und hab die Anmeldung für Mathe 3 verpasst, geht das noch bis Freitag?"</code></p>
+  <ol><li>Ist die Antwort gültiges JSON, ohne Text oder Markdown drumherum?</li><li>Stimmen die Feldnamen und Werte?</li><li>Was müsste euer Programm tun, wenn das nicht klappt? (Genau das baut ihr in der Übung.)</li></ol>
+  <textarea data-key="b3" placeholder="Eure Antwort …"></textarea>
+</div>
+
+<p class="hinweis">Die Logits im Labor sind Beispielwerte zur Veranschaulichung. Echte Modelle haben Vokabulare mit über 100 000 Tokens.</p>
+</main>
+
+<script>
+const SZENARIEN = {
+  mensa: { name: 'Mensa: offene Frage', kontext: 'Heute gibt es in der Mensa <b>…</b>',
+    tokens: [['␣Schnitzel', 3.0], ['␣Pasta', 2.6], ['␣Currywurst', 2.1], ['␣Linsen', 1.5], ['␣Tofu', 1.1], ['␣Pizza', 0.9], ['␣Fisch', 0.6], ['␣nichts', 0.2], ['␣Suppe', 0.0], ['␣Einhorn', -1.5]] },
+  htwg: { name: 'HTWG: Faktenfrage', kontext: 'Die HTWG Konstanz ist eine <b>…</b>',
+    tokens: [['␣staatliche', 3.2], ['␣private', 1.5], ['␣Hochschule', 0.9], ['␣der', 0.4], ['␣renommierte', 0.2], ['␣Fachhochschule', 0.0], ['␣Universität', -0.6], ['␣kirchliche', -1.8], ['␣kleine', -0.4], ['␣moderne', -0.9]] },
+  janein: { name: 'Ja oder Nein: enge Frage', kontext: 'Antworte nur mit Ja oder Nein. Gibt es an der HTWG eine Mensa? <b>…</b>',
+    tokens: [['Ja', 4.6], ['Nein', 2.3], ['ja', 0.4], ['Ja,', 0.1], ['Leider', -1.5], ['Vielleicht', -2.0], ['Die', -2.4], ['Es', -2.6], ['Ich', -3.0], ['Hmm', -3.5]] },
+};
+const $ = id => document.getElementById(id);
+let zaehler = {}, gesamt = 0;
+
+Object.entries(SZENARIEN).forEach(([k, s]) => { const o = document.createElement('option'); o.value = k; o.textContent = s.name; $('szenario').appendChild(o); });
+
+function verteilung() {
+  const s = SZENARIEN[$('szenario').value];
+  const T = parseFloat($('temp').value), k = parseInt($('topk').value), p = parseFloat($('topp').value);
+  const idx = s.tokens.map((_, i) => i).sort((a, b) => s.tokens[b][1] - s.tokens[a][1]);
+  let probs;
+  if (T === 0) { probs = s.tokens.map((_, i) => i === idx[0] ? 1 : 0); }
+  else { const z = s.tokens.map(t => t[1] / T), m = Math.max(...z), e = z.map(x => Math.exp(x - m)), sum = e.reduce((a, b) => a + b, 0); probs = e.map(x => x / sum); }
+  // Top-k und Top-p auf der sortierten Liste anwenden
+  const drin = new Set(); let kum = 0;
+  for (let r = 0; r < idx.length; r++) {
+    const i = idx[r];
+    if (r >= k) break;
+    drin.add(i); kum += probs[i];
+    if (p < 1 && kum >= p - 1e-9) break;
+  }
+  const summe = [...drin].reduce((a, i) => a + probs[i], 0);
+  const final = probs.map((x, i) => drin.has(i) && summe > 0 ? x / summe : 0);
+  return { s, idx, final, drin };
+}
+
+function zeichnen() {
+  $('tempWert').textContent = parseFloat($('temp').value).toFixed(2).replace('.', ',');
+  $('topkWert').textContent = $('topk').value;
+  $('toppWert').textContent = parseFloat($('topp').value).toFixed(2).replace('.', ',');
+  const { s, idx, final, drin } = verteilung();
+  $('kontext').innerHTML = s.kontext;
+  $('verteilung').innerHTML = idx.map(i => `
+    <div class="zeile ${drin.has(i) ? '' : 'raus'}">
+      <span class="tok">${s.tokens[i][0]}</span>
+      <span class="spur"><span class="balken" style="width:${(final[i] * 100).toFixed(1)}%"></span></span>
+      <span class="p">${(final[i] * 100).toFixed(1).replace('.', ',')} %</span>
+      <span class="n">${zaehler[i] ? zaehler[i] + '×' : ''}</span>
+    </div>`).join('');
+  const versch = Object.keys(zaehler).length;
+  $('statistik').textContent = gesamt ? `${gesamt} Ziehungen, ${versch} verschiedene Tokens, ${drin.size} Tokens im Topf.` : `${drin.size} Tokens im Topf.`;
+}
+
+function ziehen(n) {
+  const { s, final } = verteilung();
+  let letztes;
+  for (let j = 0; j < n; j++) {
+    let r = Math.random(), i = 0;
+    while (i < final.length - 1 && r >= final[i]) { r -= final[i]; i++; }
+    while (final[i] === 0 && i > 0) i--;
+    zaehler[i] = (zaehler[i] || 0) + 1; gesamt++; letztes = i;
+  }
+  $('ziehung').innerHTML = n === 1 ? `Gezogen: <b>${s.tokens[letztes][0]}</b>` : `${n}× gezogen, zuletzt <b>${s.tokens[letztes][0]}</b>`;
+  zeichnen();
+}
+
+function zuruecksetzen() { zaehler = {}; gesamt = 0; $('ziehung').textContent = ''; zeichnen(); }
+['temp', 'topk', 'topp'].forEach(id => $(id).addEventListener('input', zeichnen));
+$('szenario').addEventListener('change', zuruecksetzen);
+$('eins').onclick = () => ziehen(1);
+$('hundert').onclick = () => ziehen(100);
+$('reset').onclick = zuruecksetzen;
+$('standard').onclick = () => { $('temp').value = 1; $('topk').value = 10; $('topp').value = 1; zuruecksetzen(); };
+
+document.querySelectorAll('textarea[data-key]').forEach(t => {
+  const key = 'cnai-vl02-labor-' + t.dataset.key;
+  try { t.value = localStorage.getItem(key) || ''; } catch (e) {}
+  t.addEventListener('input', () => { try { localStorage.setItem(key, t.value); } catch (e) {} });
+});
+zeichnen();
+</script>
+</body>
+</html>

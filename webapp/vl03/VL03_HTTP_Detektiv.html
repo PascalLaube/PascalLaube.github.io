@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP-Detektiv · VL 03 · Web-Applikationen</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--blau:#0369a1;--dunkel:#0c4a6e;--hell:#f0f9ff;--rand:#bae6fd;--orange:#c2410c;--grau:#64748b;--text:#1a2733}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:var(--text);line-height:1.55}
+  header{background:#0c1a2e;color:#fff;padding:1.4rem 1rem}
+  header .in{max-width:980px;margin:0 auto}
+  header h1{font-size:1.6rem}
+  header p{color:#7dd3fc;margin-top:.3rem}
+  main{max-width:980px;margin:0 auto;padding:1.2rem 1rem 3rem}
+  .karte{background:#fff;border:1px solid var(--rand);border-left:5px solid var(--blau);border-radius:10px;padding:1rem 1.1rem;margin:.9rem 0}
+  .karte.orange{border-left-color:var(--orange);background:#fffaf5}
+  .aufgabe{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:1.1rem 1.2rem;margin:1.1rem 0}
+  .aufgabe h2{font-size:1.15rem;color:var(--dunkel);margin-bottom:.5rem}
+  .aufgabe h2 .zeit{float:right;font-size:.85rem;color:var(--grau);font-weight:400}
+  .aufgabe .station{display:inline-block;background:var(--hell);color:var(--blau);border:1px solid var(--rand);border-radius:999px;padding:0 .6rem;font-size:.8rem;font-weight:600;margin-bottom:.4rem}
+  ol,ul{margin:.4rem 0 .4rem 1.4rem}
+  li{margin:.2rem 0}
+  code{background:#e0f2fe;padding:0 .3rem;border-radius:3px;font-family:Consolas,monospace;font-size:.92em}
+  pre{background:#0f172a;color:#e2e8f0;padding:.7rem .9rem;border-radius:8px;overflow-x:auto;margin:.5rem 0;font-size:.92rem}
+  pre code{background:none;color:inherit;padding:0}
+  textarea{width:100%;min-height:80px;margin-top:.6rem;padding:.5rem;border:1px solid var(--rand);border-radius:6px;font:inherit;font-size:.95rem;resize:vertical}
+  .tipp{font-size:.9rem;color:var(--grau);margin-top:.4rem}
+  details{margin-top:.6rem;font-size:.92rem}
+  summary{cursor:pointer;color:var(--blau);font-weight:600}
+  .knoepfe{margin-top:1.5rem;display:flex;gap:.6rem;flex-wrap:wrap}
+  button{background:var(--blau);color:#fff;border:none;border-radius:6px;padding:.55rem 1rem;font-size:.95rem;cursor:pointer}
+  button.zweit{background:#fff;color:var(--blau);border:1px solid var(--blau)}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>🕵️ HTTP-Detektiv</h1>
+  <p>VL 03 · Das Web und seine Protokolle · Web-Applikationen · WS 2026/27</p>
+</div></header>
+<main>
+
+<div class="karte">
+  <strong>So geht's:</strong> Arbeitet zu zweit, ein Laptop mit Browser und Terminal reicht. Ihr untersucht echte Webseiten mit den DevTools und mit <code>curl</code>. Zu jeder Aufgabe steht, welche der sechs Stationen aus der Vorlesung ihr gerade beobachtet. Eure Antworten schreibt ihr in die Felder. Sie bleiben nur in diesem Browser gespeichert, mit dem Knopf unten könnt ihr sie als Textdatei sichern.
+</div>
+
+<div class="karte orange">
+  <strong>Vorbereitung (1 Minute):</strong> Öffnet Chrome, Edge oder Firefox, drückt <code>F12</code> und wechselt in den Tab <strong>Network</strong>. Setzt den Haken bei <strong>Preserve log</strong>, damit Umleitungen nicht verschwinden. Rechtsklick auf eine Spaltenüberschrift → <strong>Protocol</strong> einblenden.
+</div>
+
+<div class="aufgabe">
+  <span class="station">Station 5 · HTTP</span>
+  <h2>1 · Die erste Anfrage <span class="zeit">ca. 7 Min</span></h2>
+  <p>Ruft eine Seite eurer Wahl auf (z. B. <code>https://www.htwg-konstanz.de</code>, <code>https://github.com</code> oder euer Lieblingsshop) und ladet sie <strong>ohne Cache</strong> neu: <code>Strg+Shift+R</code> (macOS: <code>Cmd+Shift+R</code>).</p>
+  <ol>
+    <li>Welche <strong>Methode</strong> und welchen <strong>Statuscode</strong> hat die allererste Anfrage?</li>
+    <li>Wie viele Anfragen braucht die Seite insgesamt, und wie viele Daten werden übertragen? (Statuszeile unten im Network-Tab.)</li>
+    <li>Welches <strong>Protokoll</strong> nutzt die Seite: <code>http/1.1</code>, <code>h2</code> oder <code>h3</code>?</li>
+    <li>Welchen <code>Content-Type</code> hat die erste Antwort, welchen eine CSS-Datei?</li>
+  </ol>
+  <textarea data-key="a1" placeholder="Seite: … · Methode/Status: … · Anfragen/Daten: … · Protokoll: … · Content-Types: …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <span class="station">Station 6 · Cache</span>
+  <h2>2 · Caching entschlüsseln <span class="zeit">ca. 8 Min</span></h2>
+  <ol>
+    <li>Sucht eine CSS- oder JS-Datei. Welchen <code>Cache-Control</code>-Header hat sie? Wie lange darf sie im Cache bleiben?</li>
+    <li>Hat sie einen <strong>Hash im Dateinamen</strong> (etwa <code>app.f3a9c1.js</code> oder <code>merged-7c99adcc….css</code>)? Warum darf sie dann so lange gecacht werden?</li>
+    <li>Welchen <code>Cache-Control</code>-Header hat die HTML-Seite selbst? Warum ist er anders?</li>
+    <li>Ladet die Seite jetzt <strong>normal</strong> neu (<code>F5</code>). Was steht nun in der Spalte <strong>Size</strong> bzw. <strong>Transferred</strong>? Wie viele Daten werden jetzt noch übertragen?</li>
+  </ol>
+  <textarea data-key="a2" placeholder="Datei: … · Cache-Control: … · Hash: … · HTML: … · nach F5: …"></textarea>
+  <p class="tipp">Header findet ihr nach einem Klick auf die Anfrage im Tab <strong>Headers</strong> unter <strong>Response Headers</strong>.</p>
+</div>
+
+<div class="aufgabe">
+  <span class="station">Station 2 · DNS und Station 5 · HTTP</span>
+  <h2>3 · Umleitungen und ein Rätsel <span class="zeit">ca. 8 Min</span></h2>
+  <ol>
+    <li>Tippt im Browser <code>http://www.htwg-konstanz.de</code> ein, <strong>mit</strong> <code>http</code>, ohne <code>s</code>. Welcher Statuscode steht beim ersten Eintrag im Network-Tab? Klickt ihn an: Was steht im Header <code>Non-Authoritative-Reason</code>? Wer hat hier eigentlich umgeleitet, der Server oder euer Browser?</li>
+    <li>Fragt dieselbe Adresse jetzt ohne Browser ab: <code>curl.exe -I http://www.htwg-konstanz.de</code> (macOS, Linux: <code>curl -I …</code>). Welchen Statuscode schickt der <strong>Server</strong>? Ist das eine dauerhafte oder eine vorübergehende Umleitung, und welche wäre hier besser?</li>
+    <li>Jetzt <code>htwg-konstanz.de</code> ganz <strong>ohne www</strong>. Was passiert? An welcher der sechs Stationen scheitert die Anfrage? Prüft eure Vermutung im Terminal mit <code>nslookup htwg-konstanz.de</code> und <code>nslookup www.htwg-konstanz.de</code>.</li>
+  </ol>
+  <textarea data-key="a3" placeholder="Browser: … · Server: … · ohne www: … · Station: …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <span class="station">Station 5 · HTTP ohne Browser</span>
+  <h2>4 · HTTP mit curl <span class="zeit">ca. 7 Min</span></h2>
+  <p><code>curl</code> ist auf Windows 10 und 11, macOS und Linux vorinstalliert. Öffnet ein Terminal. <strong>Windows:</strong> Schreibt in der PowerShell immer <code>curl.exe</code>, nicht <code>curl</code>. Ohne <code>.exe</code> startet die PowerShell ein ganz anderes Programm und meldet seltsame Fehler.</p>
+<pre><code>curl.exe -v https://www.htwg-konstanz.de -o NUL    # Windows
+curl -v https://www.htwg-konstanz.de -o /dev/null  # macOS, Linux</code></pre>
+  <ol>
+    <li>Markiert in der Ausgabe die <strong>Request-Zeile</strong>, den <code>Host</code>-Header und die <strong>Statuszeile</strong>. Woran erkennt ihr, welche Zeilen zur Anfrage und welche zur Antwort gehören?</li>
+    <li>Die Zeilen mit <code>*</code> sind Meldungen von curl selbst. Welche davon gehören zu <strong>TLS</strong>? Das Zertifikat seht ihr am einfachsten im Browser: Klick auf das Symbol links neben der Adresse, dann „Verbindung ist sicher“ und „Zertifikat ist gültig“. Wer hat es ausgestellt, für welche Namen gilt es, und bis wann?</li>
+    <li>Fragt eine Seite ab, die es nicht gibt: <code>curl.exe -I https://www.htwg-konstanz.de/gibt-es-nicht</code>. Welcher Code kommt?</li>
+    <li>Warum lädt <code>curl</code> nur <strong>eine</strong> Datei, während der Browser in Aufgabe 1 Dutzende Anfragen gestellt hat?</li>
+  </ol>
+  <textarea data-key="a4" placeholder="Anfrage/Antwort erkennt man an … · TLS: … · nicht vorhanden: … · nur eine Datei, weil …"></textarea>
+  <p class="tipp">macOS und Linux: einfach <code>curl</code> statt <code>curl.exe</code>.</p>
+</div>
+
+<div class="aufgabe">
+  <span class="station">Bonus, falls ihr früher fertig seid</span>
+  <h2>5 · Eure eigene Seite</h2>
+  <p>Startet euren M1-Prototyp über einen lokalen Server statt per Doppelklick, z. B. im Projektordner mit <code>python -m http.server 8000</code> oder <code>npx serve</code>. Öffnet <code>http://localhost:8000</code>.</p>
+  <ol>
+    <li>Gibt es im Network-Tab ein rotes <code>404</code>? Welche Datei fehlt? (Ein <code>404</code> für <code>favicon.ico</code> ist normal, wenn ihr kein Favicon habt: Der Browser fragt von sich aus danach.)</li>
+    <li>Ladet mit <code>F5</code> neu. Wo seht ihr jetzt <code>304</code>?</li>
+  </ol>
+  <textarea data-key="a5" placeholder="Eure Beobachtungen …"></textarea>
+</div>
+
+<div class="knoepfe">
+  <button id="sichern">Antworten als Textdatei speichern</button>
+  <button class="zweit" id="leeren">Alle Felder leeren</button>
+</div>
+</main>
+
+<script>
+const felder = document.querySelectorAll('textarea[data-key]');
+felder.forEach(t => {
+  const key = 'web-vl03-detektiv-' + t.dataset.key;
+  try { t.value = localStorage.getItem(key) || ''; } catch (e) {}
+  t.addEventListener('input', () => { try { localStorage.setItem(key, t.value); } catch (e) {} });
+});
+document.getElementById('sichern').onclick = () => {
+  const text = [...felder].map(t => `Aufgabe ${t.dataset.key.slice(1)}:\n${t.value}\n`).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  a.download = 'http_detektiv_antworten.txt'; a.click();
+};
+document.getElementById('leeren').onclick = () => {
+  if (!confirm('Wirklich alle Antworten löschen?')) return;
+  felder.forEach(t => { t.value = ''; try { localStorage.removeItem('web-vl03-detektiv-' + t.dataset.key); } catch (e) {} });
+};
+</script>
+</body>
+</html>
