@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JS-Labor · VL 04 · Web-Applikationen</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--blau:#0369a1;--dunkel:#0c4a6e;--hell:#f0f9ff;--rand:#bae6fd;--orange:#c2410c;--grau:#64748b;--text:#1a2733}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:var(--text);line-height:1.55}
+  header{background:#0c1a2e;color:#fff;padding:1.4rem 1rem}
+  header .in{max-width:980px;margin:0 auto}
+  header h1{font-size:1.6rem}
+  header p{color:#7dd3fc;margin-top:.3rem}
+  main{max-width:980px;margin:0 auto;padding:1.2rem 1rem 3rem}
+  .karte{background:#fff;border:1px solid var(--rand);border-left:5px solid var(--blau);border-radius:10px;padding:1rem 1.1rem;margin:.9rem 0}
+  .karte.orange{border-left-color:var(--orange);background:#fffaf5}
+  .aufgabe{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:1.1rem 1.2rem;margin:1.1rem 0}
+  .aufgabe h2{font-size:1.15rem;color:var(--dunkel);margin-bottom:.5rem}
+  .aufgabe h2 .zeit{float:right;font-size:.85rem;color:var(--grau);font-weight:400}
+  .aufgabe .station{display:inline-block;background:var(--hell);color:var(--blau);border:1px solid var(--rand);border-radius:999px;padding:0 .6rem;font-size:.8rem;font-weight:600;margin-bottom:.4rem}
+  ol,ul{margin:.4rem 0 .4rem 1.4rem}
+  li{margin:.2rem 0}
+  code{background:#e0f2fe;padding:0 .3rem;border-radius:3px;font-family:Consolas,monospace;font-size:.92em}
+  pre{background:#0f172a;color:#e2e8f0;padding:.7rem .9rem;border-radius:8px;overflow-x:auto;margin:.5rem 0;font-size:.92rem}
+  pre code{background:none;color:inherit;padding:0}
+  textarea{width:100%;min-height:80px;margin-top:.6rem;padding:.5rem;border:1px solid var(--rand);border-radius:6px;font:inherit;font-size:.95rem;resize:vertical}
+  .tipp{font-size:.9rem;color:var(--grau);margin-top:.4rem}
+  details{margin-top:.6rem;font-size:.92rem}
+  summary{cursor:pointer;color:var(--blau);font-weight:600}
+  .knoepfe{margin-top:1.5rem;display:flex;gap:.6rem;flex-wrap:wrap}
+  button{background:var(--blau);color:#fff;border:none;border-radius:6px;padding:.55rem 1rem;font-size:.95rem;cursor:pointer}
+  button.zweit{background:#fff;color:var(--blau);border:1px solid var(--blau)}
+  .ok{color:#15803d;font-weight:600}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>⚡ JS-Labor: Die Hackathon-Seite wird lebendig</h1>
+  <p>VL 04 · JavaScript kompakt · Web-Applikationen · WS 2026/27 · 20 Minuten</p>
+</div></header>
+<main>
+
+<div class="karte">
+  <strong>So geht's:</strong> Arbeitet zu zweit an einem Laptop. Ladet <a href="VL04_JS_Labor_Starter.zip"><strong>VL 04 · JS-Labor Starter (ZIP)</strong></a> herunter und entpackt es. Darin liegt die Hackathon-Seite aus VL 2, dazu <code>programm.json</code> und <code>app.js</code>. Eure Aufgaben stehen in <code>app.js</code> bei den <code>TODO</code>-Kommentaren. Zu jeder Aufgabe gibt es hier einen Tipp und, ganz eingeklappt, die Lösung.
+</div>
+
+<div class="aufgabe">
+  <h2>A · Server starten und Konsole öffnen <span class="zeit">3 Min</span></h2>
+  <p>Im entpackten Ordner einen kleinen Server starten, <strong>nicht</strong> per Doppelklick öffnen:</p>
+<pre><code>python -m http.server 8000
+# oder
+npx serve</code></pre>
+  <ol>
+    <li><code>http://localhost:8000</code> im Browser öffnen, <code>F12</code>, Tab <strong>Konsole</strong>.</li>
+    <li>Steht dort <span class="ok">app.js ist geladen</span>? Dann läuft alles.</li>
+    <li>Tippt in die Konsole: <code>document.querySelector("h1").textContent = "Hallo"</code>. Was passiert, was passiert nach dem Neuladen?</li>
+  </ol>
+  <p class="tipp">Bleibt die Seite bei „Programm wird geladen …“ und steht in der Konsole ein CORS-Fehler, habt ihr die Datei direkt geöffnet. Adresszeile prüfen: Sie muss mit <code>http://</code> beginnen, nicht mit <code>file://</code>.</p>
+</div>
+
+<div class="aufgabe">
+  <h2>B · Programm aus programm.json laden <span class="zeit">8 Min</span></h2>
+  <p>Setzt in <code>ladeProgramm()</code> die TODOs B1 bis B3 um. Die Funktion <code>karte()</code> ist schon fertig.</p>
+  <ol>
+    <li>Nach dem Speichern und Neuladen stehen drei Karten auf der Seite, und „Programm wird geladen …“ ist verschwunden.</li>
+    <li>Network-Tab: Mit welchem Statuscode kommt <code>programm.json</code>? Und beim zweiten Neuladen? (VL 3)</li>
+    <li>Benennt <code>programm.json</code> kurz um. Was zeigt die Seite jetzt? Benennt die Datei danach zurück.</li>
+  </ol>
+  <details><summary>Tipp</summary><p><code>const antwort = await fetch(…)</code>, dann <code>antwort.ok</code> prüfen, dann <code>await antwort.json()</code>. Für jeden Punkt: <code>liste.append(karte(punkt))</code>. Am Ende <code>status.remove()</code>.</p></details>
+  <details><summary>Lösung</summary>
+<pre><code>const antwort = await fetch("programm.json");
+if (!antwort.ok) {
+  throw new Error(`HTTP ${antwort.status}`);
+}
+const punkte = await antwort.json();
+punkte.forEach((punkt) =&gt; liste.append(karte(punkt)));
+status.remove();</code></pre></details>
+  <textarea data-key="b" placeholder="Statuscodes und was bei umbenannter Datei passiert …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <h2>C · Anmeldung prüfen, ohne neu zu laden <span class="zeit">7 Min</span></h2>
+  <p>Setzt die TODOs C1 bis C4 um.</p>
+  <ol>
+    <li>Tippt eine Gmail-Adresse: Das Feld wird rot, darunter steht ein Hinweis.</li>
+    <li>Mit einer Adresse auf <code>@htwg-konstanz.de</code> und einem Namen ersetzt ein Dank das Formular. Die Seite lädt dabei <strong>nicht</strong> neu.</li>
+    <li>Was passiert ohne <code>event.preventDefault()</code>? Probiert es aus und schaut in den Network-Tab.</li>
+  </ol>
+  <details><summary>Tipp</summary><p>C1: <code>email.value.trim().endsWith(…)</code>. C2: <code>email.addEventListener("input", pruefeEmail)</code>. C3: <code>event.preventDefault()</code>. C4: <code>document.createElement("p")</code>, <code>className</code>, <code>textContent</code>, <code>form.replaceWith(…)</code>.</p></details>
+  <details><summary>Lösung</summary>
+<pre><code>// C1
+const ok = email.value.trim().endsWith("@htwg-konstanz.de");
+// C2
+email.addEventListener("input", pruefeEmail);
+// C3 (erste Zeile im submit-Listener)
+event.preventDefault();
+// C4
+const danke = document.createElement("p");
+danke.className = "bestaetigung";
+danke.textContent = `Danke, ${name}! Wir melden uns per Mail.`;
+form.replaceWith(danke);</code></pre></details>
+  <textarea data-key="c" placeholder="Was passiert ohne preventDefault? …"></textarea>
+</div>
+
+<div class="aufgabe">
+  <h2>Für Schnelle <span class="zeit">Bonus</span></h2>
+  <ol>
+    <li><strong>Daten statt HTML:</strong> Ergänzt in <code>programm.json</code> einen vierten Punkt, etwa <code>{"zeit": "19:00", "titel": "Party", "text": "Pizza für alle"}</code>. Am HTML ändert ihr nichts.</li>
+    <li><strong>Warum textContent?</strong> Setzt einen Titel auf <code>&lt;img src=x onerror=alert(1)&gt;</code>. Was passiert? Und was, wenn ihr in <code>karte()</code> testweise <code>innerHTML</code> statt <code>textContent</code> nutzt? Danach wieder zurückstellen.</li>
+    <li><strong>Event Loop:</strong> Sagt die Reihenfolge voraus und prüft in der Konsole:<br><code>setTimeout(() =&gt; console.log("A"), 0); console.log("B"); Promise.resolve().then(() =&gt; console.log("C"));</code></li>
+  </ol>
+  <textarea data-key="z" placeholder="Eure Beobachtungen …"></textarea>
+</div>
+
+<div class="knoepfe">
+  <button id="sichern">Antworten als Textdatei sichern</button>
+  <button class="zweit" id="leeren">Alle Antworten löschen</button>
+</div>
+</main>
+
+<script>
+const felder = document.querySelectorAll('textarea[data-key]');
+felder.forEach(t => {
+  const key = 'web-vl04-labor-' + t.dataset.key;
+  try { t.value = localStorage.getItem(key) || ''; } catch (e) {}
+  t.addEventListener('input', () => { try { localStorage.setItem(key, t.value); } catch (e) {} });
+});
+document.getElementById('sichern').onclick = () => {
+  const text = [...felder].map(t => `Aufgabe ${t.dataset.key.toUpperCase()}:\n${t.value}\n`).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  a.download = 'js_labor_antworten.txt'; a.click();
+};
+document.getElementById('leeren').onclick = () => {
+  if (!confirm('Wirklich alle Antworten löschen?')) return;
+  felder.forEach(t => { t.value = ''; try { localStorage.removeItem('web-vl04-labor-' + t.dataset.key); } catch (e) {} });
+};
+</script>
+</body>
+</html>

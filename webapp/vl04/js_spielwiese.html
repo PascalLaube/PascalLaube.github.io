@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JS-Spielwiese · VL 04 · Web-Applikationen</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--blau:#0369a1;--dunkel:#0c4a6e;--hell:#f0f9ff;--rand:#bae6fd;--orange:#e65100;--gruen:#16a34a;--rot:#b91c1c;--grau:#64748b;--text:#1a2733}
+  html,body{height:100%}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:var(--text);background:#fff;font-size:17px;line-height:1.45}
+  .modus{display:none;height:100%;padding:14px 18px;gap:18px}
+  .modus.aktiv{display:grid;grid-template-columns:1.05fr 1fr}
+  h2{font-size:1.05rem;color:var(--dunkel);margin-bottom:8px}
+  .knoepfe{display:flex;flex-direction:column;gap:7px}
+  .knopf{display:flex;align-items:center;gap:10px;text-align:left;background:#0f172a;color:#e2e8f0;border:2px solid transparent;border-radius:8px;padding:8px 12px;font-family:Consolas,monospace;font-size:15px;cursor:pointer}
+  .knopf:hover{border-color:#38bdf8}
+  .knopf.erledigt{background:#1e3a5f}
+  .knopf .nr{background:var(--blau);color:#fff;border-radius:50%;min-width:24px;height:24px;display:grid;place-items:center;font-family:'Segoe UI';font-size:13px;font-weight:700}
+  .zweit{background:#fff;color:var(--blau);border:1px solid var(--blau);border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer;align-self:flex-start;margin-top:4px}
+  .buehne{border:2px solid var(--rand);border-radius:12px;padding:12px;background:#f8fafc;overflow:auto;position:relative}
+  .buehne .label{position:absolute;top:6px;right:12px;padding:0 6px;font-size:12px;color:var(--grau);font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .mini h3{font-size:1.1rem;color:var(--dunkel);margin:4px 0 8px}
+  .mini ul{list-style:none;display:grid;gap:8px}
+  .mini .card{background:#fff;border:1px solid #cfe3f1;border-radius:8px;padding:8px 12px;transition:all .3s}
+  .mini .card h4{font-size:1rem;margin-bottom:2px}
+  .mini .card p{font-size:.92rem;color:#334155}
+  .gefunden{outline:3px dashed var(--orange);outline-offset:3px}
+  .hervorgehoben{background:#fff7ed!important;border-color:var(--orange)!important;transform:scale(1.03)}
+  .neu{animation:rein .5s ease}
+  @keyframes rein{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+  .hinweis{font-size:.9rem;color:var(--grau);margin-top:6px}
+  /* Events */
+  form{display:grid;gap:6px;max-width:320px}
+  input{padding:7px;border:1px solid #9ca3af;border-radius:6px;font:inherit}
+  input.ungueltig{border-color:var(--rot);background:#fef2f2}
+  button.senden{background:var(--blau);color:#fff;border:0;border-radius:6px;padding:7px 14px;font:inherit;cursor:pointer;justify-self:start}
+  .protokoll{background:#0f172a;color:#a5f3fc;border-radius:10px;padding:10px 12px;font-family:Consolas,monospace;font-size:14px;height:100%;overflow:auto}
+  .protokoll div{white-space:nowrap}
+  .protokoll .typ{color:#fbbf24}
+  .schalter{display:flex;align-items:center;gap:8px;margin:10px 0;font-weight:600;color:var(--dunkel)}
+  .schalter input{width:20px;height:20px}
+  .neuladen{position:absolute;inset:0;background:#fff;display:grid;place-items:center;font-size:1.2rem;color:var(--rot);font-weight:700;border-radius:12px}
+  /* Loop */
+  .uhr{font-family:Consolas,monospace;font-size:3rem;color:var(--dunkel);text-align:center}
+  .spur{height:22px;background:#e2e8f0;border-radius:11px;overflow:hidden;margin:10px 0}
+  .balken{height:100%;width:30%;background:var(--blau);border-radius:11px}
+  .status{font-size:1.05rem;font-weight:700;text-align:center;min-height:1.6em}
+  .status.rot{color:var(--rot)} .status.gruen{color:var(--gruen)}
+  .gross{font-size:1.05rem;padding:12px 14px}
+</style>
+</head>
+<body>
+
+<!-- ───────── Modus 1: DOM live ───────── -->
+<section class="modus" id="dom">
+  <div>
+    <h2>Klickt eine Zeile: Sie läuft sofort gegen die Seite rechts</h2>
+    <div class="knoepfe">
+      <button class="knopf" data-schritt="1"><span class="nr">1</span>const karte = document.querySelector(".card");</button>
+      <button class="knopf" data-schritt="2"><span class="nr">2</span>karte.querySelector("h4").textContent = "09:30 · Kickoff";</button>
+      <button class="knopf" data-schritt="3"><span class="nr">3</span>karte.classList.add("hervorgehoben");</button>
+      <button class="knopf" data-schritt="4"><span class="nr">4</span>const neu = document.createElement("article");</button>
+      <button class="knopf" data-schritt="5"><span class="nr">5</span>neu.textContent = "19:00 · Party"; liste.append(neu);</button>
+      <button class="knopf" data-schritt="6"><span class="nr">6</span>p.textContent = "&lt;b&gt;fett?&lt;/b&gt;";</button>
+      <button class="knopf" data-schritt="7"><span class="nr">7</span>p.innerHTML = "&lt;b&gt;fett?&lt;/b&gt;";</button>
+    </div>
+    <button class="zweit" id="dom-reset">Zurücksetzen</button>
+    <p class="hinweis">Kein Neuladen: Nur der Baum ändert sich, der Browser zeichnet neu.</p>
+  </div>
+  <div class="buehne mini" id="dom-buehne"><span class="label">Hackathon-Seite</span></div>
+</section>
+
+<!-- ───────── Modus 2: Events live ───────── -->
+<section class="modus" id="events">
+  <div>
+    <h2>Jedes Ereignis landet rechts im Protokoll</h2>
+    <div class="buehne" id="ev-buehne" style="padding-top:18px">
+      <span class="label">Anmeldung</span>
+      <form id="ev-form">
+        <label for="ev-name">Name</label>
+        <input id="ev-name" name="name" autocomplete="off">
+        <label for="ev-email">E-Mail</label>
+        <input id="ev-email" name="email" autocomplete="off">
+        <button class="senden" type="submit">Anmelden</button>
+      </form>
+    </div>
+    <label class="schalter"><input type="checkbox" id="ev-prevent" checked> event.preventDefault() im submit-Listener</label>
+    <p class="hinweis">Tippt eine Adresse, klickt herum, schickt ab. Dann den Haken entfernen und noch einmal abschicken.</p>
+  </div>
+  <div class="protokoll" id="ev-log"><div>// Ereignis-Protokoll</div></div>
+</section>
+
+<!-- ───────── Modus 3: Blockieren gegen await ───────── -->
+<section class="modus" id="loop">
+  <div>
+    <h2>JavaScript hat einen Thread. Was passiert mit der Seite?</h2>
+    <div class="knoepfe">
+      <button class="knopf gross" id="blockieren"><span class="nr">A</span>while (Date.now() &lt; ende) {}  // 3 s rechnen</button>
+      <button class="knopf gross" id="warten"><span class="nr">B</span>await new Promise(r =&gt; setTimeout(r, 3000));</button>
+    </div>
+    <p class="hinweis" style="margin-top:14px">Die Uhr rechts wird von JavaScript angetrieben, 60-mal pro Sekunde. Probiert auch, während der 3 Sekunden ins Feld zu tippen.</p>
+    <input id="loop-feld" placeholder="Hier tippen …" style="margin-top:10px;width:100%">
+  </div>
+  <div class="buehne" style="display:flex;flex-direction:column;justify-content:center">
+    <span class="label">Seite</span>
+    <div class="uhr" id="uhr">0.0 s</div>
+    <div class="spur"><div class="balken" id="balken"></div></div>
+    <div class="status" id="loop-status">läuft</div>
+  </div>
+</section>
+
+<script>
+// Eingebettet in die Folien: Nach einem Knopfdruck geht der Fokus zurück an die
+// Folien, damit Presenter und Pfeiltasten weiter blättern. In Eingabefeldern nicht.
+function fokusZurueck(e) {
+  if (window.parent !== window && !["INPUT", "TEXTAREA"].includes(e.target.tagName)) {
+    try { window.parent.focus(); } catch (_) {}
+  }
+}
+document.addEventListener("click", (e) => { if (e.target.closest("button")) setTimeout(() => fokusZurueck(e), 0); });
+document.addEventListener("keydown", (e) => {
+  if (["PageDown", "PageUp", "ArrowRight", "ArrowLeft"].includes(e.key)) fokusZurueck(e);
+});
+
+// Modus über den Hash wählen: #dom, #events, #loop
+const modus = (location.hash || "#dom").slice(1);
+document.getElementById(modus)?.classList.add("aktiv");
+
+// ── DOM live ───────────────────────────────────────────────
+const buehne = document.getElementById("dom-buehne");
+const START = `<span class="label">Hackathon-Seite</span><div class="mini">
+  <h3>Programm</h3>
+  <ul id="liste">
+    <li><article class="card"><h4>09:00 · Kickoff</h4><p>Teams finden</p></article></li>
+    <li><article class="card"><h4>10:00 · Hacken</h4><p id="hack-p">Sechs Stunden bauen</p></article></li>
+  </ul></div>`;
+let karte, neu;
+function domReset() {
+  buehne.innerHTML = START;
+  karte = neu = null;
+  document.querySelectorAll("#dom .knopf").forEach((k) => k.classList.remove("erledigt"));
+}
+const schritte = {
+  1: () => { karte = buehne.querySelector(".card"); karte.classList.add("gefunden"); },
+  2: () => { (karte ??= buehne.querySelector(".card")).querySelector("h4").textContent = "09:30 · Kickoff"; },
+  3: () => { (karte ??= buehne.querySelector(".card")).classList.add("hervorgehoben"); },
+  4: () => { neu = document.createElement("article"); neu.className = "card neu"; },
+  5: () => {
+    neu ??= Object.assign(document.createElement("article"), { className: "card neu" });
+    neu.innerHTML = ""; const h = document.createElement("h4"); h.textContent = "19:00 · Party";
+    neu.append(h); const li = document.createElement("li"); li.append(neu);
+    buehne.querySelector("#liste").append(li); neu = null;
+  },
+  6: () => { buehne.querySelector("#hack-p").textContent = "<b>fett?</b>"; },
+  7: () => { buehne.querySelector("#hack-p").innerHTML = "<b>fett?</b>"; },
+};
+document.querySelectorAll("#dom .knopf").forEach((k) => k.addEventListener("click", () => {
+  schritte[k.dataset.schritt](); k.classList.add("erledigt");
+}));
+document.getElementById("dom-reset").addEventListener("click", domReset);
+domReset();
+
+// ── Events live ────────────────────────────────────────────
+const log = document.getElementById("ev-log");
+function protokoll(typ, text) {
+  const z = document.createElement("div");
+  const t = document.createElement("span"); t.className = "typ"; t.textContent = typ.padEnd(7);
+  z.append(t, " " + text);
+  log.append(z); log.scrollTop = log.scrollHeight;
+}
+const evForm = document.getElementById("ev-form");
+const evEmail = document.getElementById("ev-email");
+["focus", "input", "click"].forEach((typ) => evForm.addEventListener(typ, (e) => {
+  const ziel = e.target.id ? "#" + e.target.id : e.target.tagName.toLowerCase();
+  protokoll(e.type, e.type === "input" ? `${ziel} = "${e.target.value}"` : ziel);
+}, true));
+evEmail.addEventListener("input", () => {
+  const ok = evEmail.value.trim().endsWith("@htwg-konstanz.de");
+  evEmail.classList.toggle("ungueltig", !ok);
+});
+evForm.addEventListener("submit", (e) => {
+  protokoll("submit", "#ev-form");
+  if (document.getElementById("ev-prevent").checked) {
+    e.preventDefault();
+    protokoll("→", "preventDefault: Seite bleibt, Code übernimmt");
+  } else {
+    e.preventDefault(); // nur für die Simulation
+    protokoll("→", "POST /anmeldung … Seite wird neu geladen");
+    const n = document.createElement("div"); n.className = "neuladen"; n.textContent = "Seite neu geladen: alles weg";
+    document.getElementById("ev-buehne").append(n);
+    setTimeout(() => { n.remove(); evForm.reset(); evEmail.classList.remove("ungueltig"); }, 1800);
+  }
+});
+
+// ── Blockieren gegen await ─────────────────────────────────
+const uhr = document.getElementById("uhr"), balken = document.getElementById("balken"), st = document.getElementById("loop-status");
+const t0 = performance.now();
+function tick(t) {
+  const s = (t - t0) / 1000;
+  uhr.textContent = s.toFixed(1) + " s";
+  balken.style.width = (50 + 45 * Math.sin(s * 3)) + "%";
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+document.getElementById("blockieren").addEventListener("click", () => {
+  st.textContent = "rechnet …"; st.className = "status rot";
+  // Kurz warten, damit der Status noch gezeichnet wird, dann blockieren.
+  setTimeout(() => {
+    const ende = Date.now() + 3000;
+    while (Date.now() < ende) {}
+    st.textContent = "fertig: 3 s lang stand alles"; st.className = "status rot";
+  }, 50);
+});
+document.getElementById("warten").addEventListener("click", async () => {
+  st.textContent = "wartet mit await …"; st.className = "status gruen";
+  await new Promise((r) => setTimeout(r, 3000));
+  st.textContent = "fertig: die Seite lief die ganze Zeit"; st.className = "status gruen";
+});
+</script>
+</body>
+</html>

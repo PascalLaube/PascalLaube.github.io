@@ -1,260 +1,59 @@
 <!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-
-    <!--Page Title-->
-    <title>Pascal Laube</title>
-
-    <!--Meta Keywords and Description-->
-    <meta name="keywords" content="">
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-
-    <!--Favicon-->
-    <link rel="shortcut icon" href="images/zebra.ico" title="zebra"/>
-
-    <!-- Main CSS Files -->
-    <link rel="stylesheet" href="css/style.css">
-
-    <!-- Namari Color CSS -->
-    <link rel="stylesheet" href="css/namari-color.css">
-
-    <!--Icon Fonts - Font Awesome Icons-->
-    <link rel="stylesheet" href="css/font-awesome.min.css">
-
-    <!-- Animate CSS-->
-    <link href="css/animate.css" rel="stylesheet" type="text/css">
-
-    <!--Google Webfonts-->
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800' rel='stylesheet' type='text/css'>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web-Applikationen WS 26/27 · Unterlagen</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:#1a2733;line-height:1.55}
+  header{background:#0c1a2e;color:#fff;padding:1.6rem 1rem}
+  header .in,main{max-width:860px;margin:0 auto}
+  header h1{font-size:1.6rem}
+  header p{color:#7dd3fc;margin-top:.3rem}
+  main{padding:1.2rem 1rem 3rem}
+  .hinweis{background:#fffaf5;border:1px solid #fed7aa;border-left:5px solid #c2410c;border-radius:10px;padding:.9rem 1.1rem;margin:1rem 0}
+  section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:1.1rem 1.2rem;margin:1.1rem 0}
+  section h2{font-size:1.2rem;color:#0c4a6e;margin-bottom:.6rem}
+  ul{list-style:none}
+  li{margin:.45rem 0}
+  a{color:#0369a1;font-weight:600;text-decoration:none}
+  a:hover{text-decoration:underline}
+  .typ{display:inline-block;min-width:3.4rem;font-size:.75rem;font-weight:700;color:#0369a1;background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;text-align:center;margin-right:.5rem}
+  .info{color:#64748b;font-size:.9rem}
+  footer{color:#64748b;font-size:.85rem;text-align:center;margin-top:2rem}
+</style>
 </head>
 <body>
+<header><div class="in">
+  <h1>Web-Applikationen · WS 26/27</h1>
+  <p>Prof. Dr. Pascal Laube · HTWG Konstanz</p>
+</div></header>
+<main>
+  <div class="hinweis">
+    <strong>Moodle ist gerade nicht erreichbar.</strong> Hier findet ihr übergangsweise die Unterlagen und die Übung zu Vorlesung 4. Sobald Moodle wieder läuft, liegt dort alles wie gewohnt.
+  </div>
 
-<!-- Preloader -->
-<div id="preloader">
-    <div id="status" class="la-ball-triangle-path">
-        <div></div>
-        <div></div>
-        <div></div>
-    </div>
-</div>
-<!--End of Preloader-->
+  <section>
+    <h2>VL 04 · JavaScript kompakt</h2>
+    <ul>
+      <li><span class="typ">HTML</span><a href="webapp/vl04/VL04_Folien_JavaScript_kompakt.html">Folien (interaktiv, im Browser)</a></li>
+      <li><span class="typ">PDF</span><a href="webapp/vl04/VL04_Folien_JavaScript_kompakt.pdf">Folien als PDF</a></li>
+      <li><span class="typ">PDF</span><a href="webapp/vl04/VL04_Skript_JavaScript_kompakt.pdf">Skript JavaScript kompakt</a></li>
+      <li><span class="typ">HTML</span><a href="webapp/vl04/js_spielwiese.html">JS-Spielwiese</a> <span class="info">(Beispiele aus den Folien zum Ausprobieren)</span></li>
+    </ul>
+  </section>
 
-<div class="page-border" data-wow-duration="0.7s" data-wow-delay="0.2s">
-    <div class="top-border wow fadeInDown animated" style="visibility: visible; animation-name: fadeInDown;"></div>
-    <div class="right-border wow fadeInRight animated" style="visibility: visible; animation-name: fadeInRight;"></div>
-    <div class="bottom-border wow fadeInUp animated" style="visibility: visible; animation-name: fadeInUp;"></div>
-    <div class="left-border wow fadeInLeft animated" style="visibility: visible; animation-name: fadeInLeft;"></div>
-</div>
+  <section>
+    <h2>Übung VL 04 · Interaktion</h2>
+    <ul>
+      <li><span class="typ">HTML</span><a href="webapp/vl04/VL04_JS_Labor.html">JS-Labor: Die Hackathon-Seite wird lebendig</a> <span class="info">(Aufgaben, Tipps, Lösungen)</span></li>
+      <li><span class="typ">ZIP</span><a href="webapp/vl04/VL04_JS_Labor_Starter.zip" download>JS-Labor Starter-Projekt</a></li>
+      <li><span class="typ">PDF</span><a href="webapp/vl04/Uebung_VL04_Interaktion.pdf">Übungsblatt VL 04 · Interaktion</a></li>
+    </ul>
+  </section>
 
-<div id="wrapper">
-
-    <header id="banner" class="scrollto clearfix" data-enllax-ratio=".5">
-        <div id="header" class="nav-collapse">
-            <div class="row clearfix">
-                <div class="col-1">
-
-                    <!--Logo-->
-                    <div id="logo">
-
-                        <!--Logo that is shown on the banner-->
-                        <!--img src="images/logo.png" id="banner-logo" alt="Landing Page"/-->
-                        <!--End of Banner Logo-->
-
-                        <!--The Logo that is shown on the sticky Navigation Bar-->
-                        <img src="images/logo-2.png" id="navigation-logo" alt="Landing Page"/>
-                        <!--End of Navigation Logo-->
-
-                    </div>
-                    <!--End of Logo-->
-
-                    <aside>
-
-                        <!--Social Icons in Header-->
-                        <ul class="social-icons">
-                            <li>
-                                <a target="_blank" title="LinkedIn" href="https://www.linkedin.com/in/pascal-laube-8212b514a">
-                                    LinkedIn
-                                </a>
-                            </li>
-                        </ul>
-                        <!--End of Social Icons in Header-->
-
-                    </aside>
-
-                    <!--Main Navigation-->
-                    <nav id="nav-main">
-                        <ul>
-                            <li>
-                                <a href="#banner">Home</a>
-                            </li>
-                            <li>
-                                <a href="#lectures">Lectures</a>
-                            </li>
-                        </ul>
-                    </nav>
-                    <!--End of Main Navigation-->
-
-                    <div id="nav-trigger"><span></span></div>
-                    <nav id="nav-mobile"></nav>
-
-                </div>
-            </div>
-        </div><!--End of Header-->
-
-        <!--Banner Content-->
-        <div id="banner-content" class="row clearfix">
-
-            <div class="col-38">
-
-                <div class="section-heading">
-                    <h1>Pascal Laube</h1>
-                    <h2>Professor for Software Systems and AI, Advisor for AI and Ressource Management & Machine Learning Enthusiast</h2>
-                </div>
-
-                <!--Call to Action-->
-                <a href="#lectures" class="button">To Lectures</a>
-                <!--End Call to Action-->
-
-            </div>
-
-        </div><!--End of Row-->
-    </header>
-
-    <!--Main Content Area-->
-    <main id="content">
-
-        <!--Introduction-->
-        <section id="lectures" class="introduction scrollto">
-
-            <div class="row clearfix">
-
-                <div class="col-3">
-                    <div class="section-heading">
-                        <h3>Lectures</h3>
-                        <h2 class="section-title">List of current and past lectures</h2>
-                        <p class="section-subtitle">Find downloadable content</p>
-                    </div>
-
-                </div>
-
-                <div class="col-2-3">
-
-                    <!--Icon Block-->
-                    <div class="col-2 icon-block icon-top wow fadeInUp" data-wow-delay="0.1s">
-                        <!--Icon-->
-                        <div class="icon">
-                            <i class="fa fa-bolt fa-2x"></i>
-                        </div>
-                        <!--Icon Block Description-->
-                        <div class="icon-block-description">
-                            <h4>Systems Engineering WS 23/24</h4>
-                            <u>Assignments</u> 
-							<br>
-							<a href="/sews2324/A1_SE_WS2324.pdf">Assignment 1</a>
-							<br>
-							<br>
-							<u>Lecture (!changing document!)</u>
-							<br>
-							<a href="/sews2324/SysEng.pdf">Lecture WS2324</a>
-                        </div>
-                    </div>
-                    <!--End of Icon Block-->
-
-                    <!--Icon Block-->
-                    <div class="col-2 icon-block icon-top wow fadeInUp" data-wow-delay="0.3s">
-                        <!--Icon-->
-                        <div class="icon">
-                            <i class="fa fa-tablet fa-2x"></i>
-                        </div>
-                        <!--Icon Block Description-->
-                        <div class="icon-block-description">
-                            <h4>Einführung in die Informatik WS 23/24</h4>
-							<a href="http://eepurl.com/iBjzP6">Subscribe to Lecture</a>
-                            <br>
-							<br>
-							<u>Assignments</u> 
-							<br>
-							<a href="/eii/ausarbeitung_vorlage.tex">Ausarbeitung Vorlage</a>
-							<br>
-							<a href="/eii/00-Setup.pdf">Assignment 0</a> (Deadline 24.10)
-							<br>
-							<a href="/eii/01-Uebung1.pdf">Assignment 1</a> (Deadline 05.11)
-							<br>
-							<a href="/eii/02-Uebung2.pdf">Assignment 2</a> (Deadline 07.11)
-							<br>
-							<br>
-							<u>Lecture (!changing document!)</u>
-							<br>
-							<a href="/eii/skript_vorb_einf.pdf">Vorbemerkung und Einführung</a>
-                        </div>
-                    </div>
-                    <!--End of Icon Block-->
-
-                    <!--Icon Block-->
-                    <div class="col-2 icon-block icon-top wow fadeInUp" data-wow-delay="0.5s">
-                        <!--Icon-->
-                        <div class="icon">
-                            <i class="fa fa-rocket fa-2x"></i>
-                        </div>
-                        <!--Icon Block Description-->
-                        <div class="icon-block-description">
-                            <h4>Algorithmen und Datenstrukturen WS 23/24</h4>
-							<a href="http://eepurl.com/iBjxI-/">Subscribe to Lecture</a>
-                            <br>
-							<br>
-							<u>Assignments</u> 
-							<br>
-							<a href="/adws2324/uebung1.pdf">Assignment 1</a> (Deadline 23.10)
-							<br>
-							<a href="/adws2324/uebung2.pdf">Assignment 2</a> (Deadline 06.11)
-							<br>
-							<a href="/adws2324/uebung3.pdf">Assignment 3</a> (Deadline 20.11)
-							<br>
-							<br>
-							<u>Lecture (!changing document!)</u>
-							<br>
-							<a href="/adws2324/algodat_laube.pdf">Lecture Algos WS2324</a>
-							<br>
-							<a href="/adws2324/java_laube.pdf">Lecture Java WS2324</a>
-                        </div>
-                    </div>
-                    <!--End of Icon Block-->
-
-                </div>
-
-            </div>
-
-
-        </section>
-        <!--End of Introduction-->
-
-    </main>
-    <!--End Main Content Area-->
-
-
-    <!--Footer-->
-    <footer id="landing-footer" class="clearfix">
-    </footer>
-    <!--End of Footer-->
-
-</div>
-
-<!-- Include JavaScript resources -->
-<script src="js/jquery.1.8.3.min.js"></script>
-<script src="js/wow.min.js"></script>
-<script src="js/featherlight.min.js"></script>
-<script src="js/featherlight.gallery.min.js"></script>
-<script src="js/jquery.enllax.min.js"></script>
-<script src="js/jquery.scrollUp.min.js"></script>
-<script src="js/jquery.easing.min.js"></script>
-<script src="js/jquery.stickyNavbar.min.js"></script>
-<script src="js/jquery.waypoints.min.js"></script>
-<script src="js/images-loaded.min.js"></script>
-<script src="js/lightbox.min.js"></script>
-<script src="js/site.js"></script>
-
-
+  <footer>Stand: 22.10.2026</footer>
+</main>
 </body>
 </html>
