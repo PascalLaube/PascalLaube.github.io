@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retrieval-Spielwiese · VL 04 · Cloud-native AI</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--lila:#6d28d9;--dunkel:#2e1065;--hell:#f5f3ff;--rand:#ddd6fe;--orange:#e65100;--gruen:#15803d;--grau:#64748b;--text:#1a2733}
+  html,body{height:100%}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:var(--text);background:#fff;font-size:15px;line-height:1.4}
+  .modus{display:none;height:100%;padding:10px 14px;flex-direction:column;gap:8px}
+  .modus.an{display:flex}
+  .zeile{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button{font:inherit;font-size:13px;border:1px solid var(--rand);background:var(--hell);color:var(--dunkel);border-radius:999px;padding:3px 10px;cursor:pointer}
+  button:hover{border-color:var(--lila)}
+  button.aktiv{background:var(--lila);color:#fff;border-color:var(--lila)}
+  button.umschrieben{border-color:#fdba74;background:#fff7ed}
+  button.kennung{border-color:#86efac;background:#f0fdf4}
+  button.fehlt{border-color:#cbd5e1;background:#f8fafc}
+  button.aktiv{background:var(--lila)!important;color:#fff!important;border-color:var(--lila)!important}
+  .legende button{font-size:11px;padding:1px 7px;cursor:default}
+  input[type=text]{font:inherit;flex:1;min-width:260px;padding:6px 10px;border:2px solid var(--rand);border-radius:8px}
+  input[type=text]:focus{outline:none;border-color:var(--lila)}
+  .frage{font-size:18px;font-weight:700;color:var(--dunkel)}
+  .spalten{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:0}
+  .spalte{border:2px solid var(--rand);border-radius:10px;padding:8px 10px;overflow:auto;min-height:0}
+  .spalte h3{font-size:15px;color:var(--lila);margin-bottom:2px}
+  .spalte h3 button{font-size:11px;padding:1px 8px}
+  .spalte.zeichen h3{color:var(--orange)}
+  .spalte .unter{font-size:12px;color:var(--grau);margin-bottom:6px}
+  .treffer{border-radius:8px;padding:5px 8px;margin:5px 0;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px}
+  .treffer.richtig{background:#f0fdf4;border-color:#4ade80}
+  .treffer .kopf{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:13px}
+  .treffer .datei{font-family:Consolas,monospace}
+  .treffer .text{color:#334155;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .balken{height:6px;border-radius:3px;background:var(--lila);margin-top:3px}
+  .zeichen .balken{background:var(--orange)}
+  mark{background:#fed7aa;border-radius:2px;padding:0 1px}
+  .leer{color:var(--grau);font-style:italic;padding:8px 0}
+  .soll{font-size:12px;color:var(--grau)}
+  .soll b{color:var(--gruen)}
+  .legende{font-size:12px;color:var(--grau)}
+  /* Karte */
+  .karte{display:grid;grid-template-columns:1fr 300px;gap:12px;flex:1;min-height:0}
+  svg.punkte{width:100%;height:100%;border:2px solid var(--rand);border-radius:10px;background:#fcfbff}
+  .info{border:2px solid var(--rand);border-radius:10px;padding:8px 10px;overflow:auto;font-size:13px}
+  .info h3{font-size:14px;color:var(--lila);margin-bottom:4px}
+  /* Chunking */
+  .regler{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:14px}
+  .regler label{display:flex;gap:6px;align-items:center}
+  .regler output{font-weight:700;color:var(--lila);min-width:3.2em;display:inline-block}
+  .chunks{flex:1;overflow:auto;border:2px solid var(--rand);border-radius:10px;padding:10px;font-size:14px;line-height:1.75;white-space:pre-wrap;font-family:Consolas,monospace}
+  .ch{border-radius:4px;padding:1px 0}
+  .ch0{background:#ede9fe}.ch1{background:#fef3c7}.ch2{background:#dcfce7}.ch3{background:#e0f2fe}.ch4{background:#fce7f3}
+  .ueberlapp{background:#c4b5fd !important}
+  .fakt{outline:2px solid var(--orange);outline-offset:1px;border-radius:2px}
+  .status{font-size:14px;padding:6px 10px;border-radius:8px}
+  .status.gut{background:#f0fdf4;color:#14532d}
+  .status.schlecht{background:#fff7ed;color:#9a3412}
+</style>
+</head>
+<body>
+<nav id="tabs" style="display:none;gap:6px;padding:8px 14px 0">
+  <button data-m="suche">Suchen: grep und Embeddings</button>
+  <button data-m="karte">Karte nach Bedeutung</button>
+  <button data-m="chunking">Chunking</button>
+</nav>
+
+<!-- ======================= SUCHE ======================= -->
+<section class="modus" id="m-suche">
+  <div class="zeile" id="vorlagen"></div>
+  <div class="zeile">
+    <input type="text" id="eingabe" placeholder="Eigene Frage tippen und Enter …">
+    <span class="legende">Farbe der Fragen: <button class="umschrieben" disabled>umschrieben</button> <button class="kennung" disabled>exakte Kennung</button> <button class="fehlt" disabled>steht nirgends</button> <button disabled>direkt</button></span>
+  </div>
+  <div class="zeile"><span class="frage" id="frage-text"></span><span class="soll" id="soll"></span></div>
+  <div class="spalten">
+    <div class="spalte zeichen">
+      <h3>Suche nach Zeichen · <span id="grep-titel">grep</span> <span style="float:right"><button id="b-grep" class="aktiv">Treffer zählen</button> <button id="b-bm25">BM25</button></span></h3>
+      <div class="unter" id="grep-woerter"></div>
+      <div id="grep-liste"></div>
+    </div>
+    <div class="spalte">
+      <h3>Suche nach Bedeutung · Embeddings</h3>
+      <div class="unter" id="emb-info"></div>
+      <div id="emb-liste"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= KARTE ======================= -->
+<section class="modus" id="m-karte">
+  <div class="zeile" id="vorlagen-karte"></div>
+  <div class="karte">
+    <svg class="punkte" id="punkte" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="info" id="karte-info"></div>
+  </div>
+</section>
+
+<!-- ======================= CHUNKING ======================= -->
+<section class="modus" id="m-chunking">
+  <div class="regler">
+    <label>Abschnittsgröße <input type="range" id="groesse" min="80" max="700" step="10" value="160"><output id="groesse-w"></output> Zeichen</label>
+    <label>Überlappung <input type="range" id="overlap" min="0" max="150" step="10" value="0"><output id="overlap-w"></output> Zeichen</label>
+    <button id="nach-ueberschrift">an Überschriften trennen</button>
+  </div>
+  <div class="status" id="chunk-status"></div>
+  <div class="chunks" id="chunks"></div>
+</section>
+
+<script>
+const DATEN = {"modell": "granite-embedding:278m", "abschnitte": [{"datei": "abschlussarbeit.md", "text": "Bachelorarbeit\nDie Bachelorarbeit meldet ihr mit dem Formular PA-12 beim Prüfungsamt an,\nunterschrieben von der betreuenden Professorin oder dem betreuenden Professor.\nVoraussetzung sind mindestens 150 ECTS.", "xy": [0.4966, 0.792]}, {"datei": "abschlussarbeit.md", "text": "Bachelorarbeit\nDie Bearbeitungszeit beträgt drei Monate. Auf begründeten Antrag kann sie\neinmal um bis zu sechs Wochen verlängert werden. Abgegeben wird digital als\nPDF über das Prüfungsportal, zusammen mit der unterschriebenen Erklärung zur\nselbstständigen Anfertigung und zur Nutzung von KI-Werkzeugen.", "xy": [0.4771, 0.7726]}, {"datei": "auslandssemester.md", "text": "Auslandssemester\nDas International Office in Gebäude A, Raum A-301, berät zu Partnerhochschulen,\nErasmus-Förderung und Anerkennung von Leistungen. Die Bewerbung für ein\nAuslandssemester im folgenden Studienjahr läuft bis zum 15. Januar.", "xy": [0.667, 0.3996]}, {"datei": "auslandssemester.md", "text": "Auslandssemester\nVor der Abreise schließt ihr ein Learning Agreement mit eurer\nStudiengangsleitung ab. Darin steht, welche Module im Ausland euch zu Hause\nangerechnet werden. Ohne Learning Agreement gibt es keine Garantie auf\nAnerkennung.", "xy": [0.6354, 0.4025]}, {"datei": "beratung.md", "text": "Beratung und Unterstützung\n## Studienberatung\nDie Zentrale Studienberatung hilft bei Fragen zur Studienwahl, bei Zweifeln\nam Studium und bei Problemen mit der Studienorganisation. Offene Sprechstunde\nDienstag und Donnerstag 10 bis 12 Uhr, Raum A-201.", "xy": [0.8287, 0.4607]}, {"datei": "beratung.md", "text": "Beratung und Unterstützung\n## Psychosoziale Beratung\nBei Prüfungsangst, Überlastung, persönlichen Krisen oder wenn euch alles zu\nviel wird, bietet die Psychosoziale Beratung des Studierendenwerks kostenlose\nund vertrauliche Gespräche an. Termine gibt es meist innerhalb einer Woche\nüber das Online-Formular. In akuten Notlagen ist die Telefonseelsorge rund um\ndie Uhr unter 0800 111 0 111 erreichbar.", "xy": [0.8533, 0.4491]}, {"datei": "bibliothek.md", "text": "Bibliothek\n## Öffnungszeiten\nDie Bibliothek im Gebäude L hat Montag bis Freitag von 8 bis 22 Uhr geöffnet,\nam Samstag von 9 bis 16 Uhr. An Sonn- und Feiertagen bleibt sie geschlossen.\nIn der vorlesungsfreien Zeit schließt sie werktags schon um 18 Uhr.", "xy": [0.0562, 0.3034]}, {"datei": "bibliothek.md", "text": "Bibliothek\n## Ausleihe und Verlängerung\nAusleihen könnt ihr mit der Campuskarte an den Selbstverbuchern im Eingang.\nDie Leihfrist beträgt vier Wochen. Im Bibliothekskonto lässt sich ein Medium\nbis zu dreimal online verlängern, solange niemand es vorgemerkt hat.", "xy": [0.1102, 0.2387]}, {"datei": "bibliothek.md", "text": "Bibliothek\n## Mahngebühren\nWer ein Medium zu spät zurückgibt, zahlt 50 Cent pro Tag und Medium.\nAb 10 Euro offener Gebühren ist das Konto für weitere Ausleihen gesperrt.", "xy": [0.0817, 0.2284]}, {"datei": "bibliothek.md", "text": "Bibliothek\n## Gruppenräume\nIm ersten Stock gibt es sechs Gruppenräume (L-104 bis L-109) für zwei bis\nacht Personen. Sie werden über das Buchungsportal für höchstens drei Stunden\nam Stück reserviert.", "xy": [0.083, 0.3439]}, {"datei": "campuskarte.md", "text": "Campuskarte\nDie Campuskarte ist euer Studierendenausweis, eure Bibliothekskarte und eure\nGeldbörse für Mensa und Drucker. Sie gilt nur mit aktuellem\nSemesteraufdruck, den ihr an den Validierungsautomaten in Gebäude A erneuert.", "xy": [0.4412, 0.3146]}, {"datei": "campuskarte.md", "text": "Campuskarte\n## Verlust\nIst die Karte weg, lasst sie sofort im Studierendenportal sperren, damit\nniemand euer Guthaben ausgibt. Eine Ersatzkarte kostet 15 Euro und liegt nach\nzwei Werktagen im Studierendensekretariat, Raum A-010, zur Abholung bereit.\nRestguthaben wird auf die neue Karte übertragen.", "xy": [0.4765, 0.3043]}, {"datei": "drucken.md", "text": "Drucken und Kopieren\nDrucker stehen in der Bibliothek und im Kopierraum F-012 im Erdgeschoss von\nGebäude F. Gedruckt wird mit der Campuskarte. Eine Seite schwarzweiß kostet\n5 Cent, in Farbe 20 Cent. Scannen ist kostenlos und landet als PDF in eurem\nHochschulpostfach.", "xy": [0.2078, 0.2348]}, {"datei": "drucken.md", "text": "Drucken und Kopieren\nDruckaufträge schickt ihr über das Portal print.campus an die Warteschlange\nund gebt sie dann am Gerät mit der Karte frei. Nicht abgeholte Aufträge\nwerden nach 24 Stunden gelöscht.", "xy": [0.1927, 0.2052]}, {"datei": "fundbuero.md", "text": "Fundsachen\nLiegen gebliebene Gegenstände wie Schlüssel, Brillen, Jacken oder Ladekabel\nbringt der Hausdienst zur Pforte in Gebäude A. Dort könnt ihr sie Montag bis\nFreitag von 7 bis 18 Uhr abholen. Nach drei Monaten gehen nicht abgeholte\nSachen an das städtische Fundbüro. Wertsachen wie Handys und Geldbörsen gibt\ndie Pforte sofort an das städtische Fundbüro weiter.", "xy": [0.1427, 0.1698]}, {"datei": "lernraeume.md", "text": "Lernplätze außerhalb der Bibliothek\nDie Lernzone im Erdgeschoss von Gebäude O ist rund um die Uhr geöffnet, auch\nam Wochenende. Nach 20 Uhr öffnet die Tür nur mit der Campuskarte.\nEs gibt 60 Plätze mit Steckdosen, eine Teeküche und zwei Telefonboxen für\nVideocalls. Reservieren kann man dort nichts, wer zuerst kommt, lernt zuerst.", "xy": [0.2361, 0.4311]}, {"datei": "lernraeume.md", "text": "Lernplätze außerhalb der Bibliothek\nTagsüber sind außerdem freie Seminarräume nutzbar, solange dort keine\nVeranstaltung stattfindet. Welche Räume frei sind, zeigt die Raumbelegung im\nStudierendenportal.", "xy": [0.2092, 0.4408]}, {"datei": "mensa.md", "text": "Mensa\n## Öffnungszeiten\nDie Mensa im Gebäude M gibt Essen Montag bis Freitag von 11:15 bis 14:00 Uhr\naus. Die Cafeteria daneben öffnet schon um 7:45 Uhr und schließt um 16 Uhr.", "xy": [0.4902, 0.0741]}, {"datei": "mensa.md", "text": "Mensa\n## Angebot\nJeden Tag gibt es drei Hauptgerichte, davon mindestens eines vegan.\nAllergene stehen auf dem Speiseplan online und an der Ausgabe.", "xy": [0.4999, 0.0343]}, {"datei": "mensa.md", "text": "Mensa\n## Preise und Bezahlung\nStudierende zahlen 3,40 Euro für ein Hauptgericht, Beschäftigte 5,20 Euro,\nGäste 7,50 Euro. Bezahlt wird nur mit der Campuskarte oder per Girocard,\nBargeld nimmt die Kasse nicht an. Guthaben ladet ihr am Automaten im Foyer auf.", "xy": [0.4842, 0.1712]}, {"datei": "nachteilsausgleich.md", "text": "Nachteilsausgleich\nStudierende mit einer Behinderung oder einer chronischen Erkrankung können\nfür Prüfungen einen Nachteilsausgleich beantragen. Möglich sind zum Beispiel\nmehr Bearbeitungszeit, ein eigener Raum oder Pausen.", "xy": [1.0, 0.6648]}, {"datei": "nachteilsausgleich.md", "text": "Nachteilsausgleich\nDen Antrag stellt ihr formlos beim Prüfungsausschuss, mindestens sechs Wochen\nvor der Prüfung. Bei der Begründung hilft die Beauftragte für Studierende mit\nBehinderung im Gebäude A, Raum A-115. Ein fachärztliches Gutachten ist\nin der Regel nötig.", "xy": [0.9642, 0.6576]}, {"datei": "parken.md", "text": "Parken und Anreise\nAuf dem Campus gibt es zwei Parkplätze für Kfz: P1 hinter Gebäude A und das\nParkhaus P2 an der Brauneggerstraße. Für beide braucht ihr einen\nParkausweis, der 45 Euro pro Semester kostet und im Studierendenportal\nbeantragt wird. Ohne Ausweis kostet ein Tag im Parkhaus 6 Euro.", "xy": [0.3379, 0.3095]}, {"datei": "parken.md", "text": "Parken und Anreise\nFahrradstellplätze gibt es vor jedem Gebäude, überdacht vor F und O.\nMit Bus und Bahn erreicht ihr den Campus über die Haltestelle Hochschule.", "xy": [0.3107, 0.3258]}, {"datei": "praxissemester.md", "text": "Praktisches Studiensemester\nIm fünften Semester arbeitet ihr mindestens 95 Präsenztage in einem\nUnternehmen. Den Ausbildungsvertrag schickt ihr spätestens vier Wochen vor\nBeginn an das Praktikantenamt, Raum F-201. Das Praktikantenamt prüft, ob die\nStelle zum Studiengang passt.", "xy": [0.5081, 0.6608]}, {"datei": "praxissemester.md", "text": "Praktisches Studiensemester\nAm Ende gebt ihr einen Bericht von etwa 15 Seiten und ein Zeugnis des\nUnternehmens ab. Krankheitstage über fünf Tage hinaus müssen nachgeholt werden.", "xy": [0.4889, 0.6398]}, {"datei": "pruefungsanmeldung.md", "text": "Prüfungsanmeldung\n## Anmeldezeitraum\nPrüfungen meldet ihr im Portal HISinOne an. Der Anmeldezeitraum für das\nWintersemester läuft vom 1. bis 20. November, für das Sommersemester vom\n1. bis 20. Mai. Ohne Anmeldung dürft ihr nicht an der Prüfung teilnehmen.", "xy": [0.7168, 0.7273]}, {"datei": "pruefungsanmeldung.md", "text": "Prüfungsanmeldung\n## Abmeldung\nAbmelden könnt ihr euch ohne Angabe von Gründen bis sieben Tage vor dem\nPrüfungstermin, ebenfalls in HISinOne. Danach ist eine Abmeldung nur noch\nüber einen Rücktritt mit triftigem Grund möglich (siehe Prüfungsordnung § 12).", "xy": [0.7367, 0.764]}, {"datei": "pruefungsanmeldung.md", "text": "Prüfungsanmeldung\n## Prüfungsplan\nDer Prüfungsplan erscheint spätestens vier Wochen vor Beginn des\nPrüfungszeitraums auf der Website des Prüfungsamts.", "xy": [0.6754, 0.7247]}, {"datei": "pruefungsordnung.md", "text": "Prüfungsordnung (Auszug)\n§ 9 Prüfungsformen. Prüfungen sind Klausuren, mündliche Prüfungen,\nHausarbeiten oder Projektarbeiten. Die Form steht im Modulhandbuch.", "xy": [0.8516, 0.7901]}, {"datei": "pruefungsordnung.md", "text": "Prüfungsordnung (Auszug)\n§ 12 Rücktritt. Ein Rücktritt nach Ablauf der Abmeldefrist ist nur mit\ntriftigem Grund möglich. Der Grund ist unverzüglich schriftlich nachzuweisen.", "xy": [0.7835, 0.7951]}, {"datei": "pruefungsordnung.md", "text": "Prüfungsordnung (Auszug)\n§ 14 Wiederholung. Eine nicht bestandene Prüfung darf zweimal wiederholt\nwerden. Die zweite Wiederholung ist in der Regel eine mündliche Prüfung.\nBestandene Prüfungen können nicht wiederholt werden.", "xy": [0.8246, 0.716]}, {"datei": "pruefungsordnung.md", "text": "Prüfungsordnung (Auszug)\n§ 17 Täuschung. Wer täuscht oder nicht zugelassene Hilfsmittel benutzt,\nerhält für die Prüfung die Note 5,0. In schweren Fällen kann der\nPrüfungsausschuss die Exmatrikulation beschließen.", "xy": [0.8917, 0.7624]}, {"datei": "pruefungsordnung.md", "text": "Prüfungsordnung (Auszug)\n§ 21 Nachteilsausgleich. Studierende mit Behinderung oder chronischer\nErkrankung können einen Ausgleich beantragen, etwa mehr Bearbeitungszeit.", "xy": [0.9826, 0.6977]}, {"datei": "pruefungsunfaehigkeit.md", "text": "Rücktritt aus gesundheitlichen Gründen\n## Wann gilt das?\nWer an einem Prüfungstag aus gesundheitlichen Gründen nicht antreten kann\noder eine Prüfung deshalb abbricht, gilt als prüfungsunfähig. Die Prüfung\nwird dann nicht als Fehlversuch gewertet, wenn der Grund rechtzeitig\nnachgewiesen wird.", "xy": [0.7352, 0.8407]}, {"datei": "pruefungsunfaehigkeit.md", "text": "Rücktritt aus gesundheitlichen Gründen\n## Nachweis\nNötig ist ein ärztliches Attest, das die Prüfungsunfähigkeit am Prüfungstag\nbestätigt. Eine einfache Arbeitsunfähigkeitsbescheinigung reicht nicht.\nDas Attest muss innerhalb von drei Werktagen nach dem Prüfungstermin beim\nPrüfungsamt eingehen, zusammen mit dem Formular PA-07\n„Antrag auf Anerkennung der Prüfungsunfähigkeit“.", "xy": [0.7661, 0.8408]}, {"datei": "pruefungsunfaehigkeit.md", "text": "Rücktritt aus gesundheitlichen Gründen\n## Danach\nIhr werdet automatisch zum nächsten regulären Termin angemeldet.", "xy": [0.7247, 0.8856]}, {"datei": "raeume.md", "text": "Räume und Gebäude finden\nJede Raumnummer besteht aus dem Gebäudebuchstaben, dem Stockwerk und der\nRaumnummer im Stockwerk. O-201 liegt also in Gebäude O, im zweiten\nObergeschoss, Raum 01. Das Erdgeschoss hat die Ziffer 0, F-012 liegt also im\nErdgeschoss von Gebäude F.", "xy": [0.1807, 0.3476]}, {"datei": "raeume.md", "text": "Räume und Gebäude finden\nGebäude A beherbergt Verwaltung, Studierendensekretariat und Infopoint.\nIn Gebäude L ist die Bibliothek, in M die Mensa. Die Hörsäle der Informatik\nliegen in den Gebäuden F und O. Einen Lageplan gibt es als PDF auf der\nWebsite und als Tafel an jedem Eingang.", "xy": [0.2148, 0.3394]}, {"datei": "rueckmeldung.md", "text": "Rückmeldung und Semesterbeitrag\nDamit ihr im nächsten Semester eingeschrieben bleibt, müsst ihr euch\nzurückmelden. Das geschieht durch die Überweisung des Semesterbeitrags.", "xy": [0.616, 0.539]}, {"datei": "rueckmeldung.md", "text": "Rückmeldung und Semesterbeitrag\nDer Semesterbeitrag beträgt 168,40 Euro. Er setzt sich zusammen aus dem\nVerwaltungskostenbeitrag (70 Euro), dem Beitrag für das Studierendenwerk\n(83,40 Euro) und dem Beitrag für die Verfasste Studierendenschaft (15 Euro).", "xy": [0.5855, 0.4996]}, {"datei": "rueckmeldung.md", "text": "Rückmeldung und Semesterbeitrag\nFristen: bis 15. Januar für das Sommersemester, bis 15. Juli für das\nWintersemester. Wer zu spät überweist, zahlt eine Säumnisgebühr von 25 Euro.\nWer sich gar nicht zurückmeldet, wird exmatrikuliert.", "xy": [0.6228, 0.5055]}, {"datei": "semesterticket.md", "text": "Semesterticket\nDas Deutschlandsemesterticket kostet 176,40 Euro pro Semester und ist nicht\nim Semesterbeitrag enthalten. Ihr kauft es freiwillig im Portal des\nVerkehrsverbunds. Es gilt deutschlandweit im Nahverkehr, also in Bussen,\nStraßenbahnen und Regionalzügen, aber nicht im ICE oder IC.\nDas Ticket ist digital und an die Campuskarte gebunden.", "xy": [0.5052, 0.4273]}, {"datei": "sport.md", "text": "Hochschulsport\nDer Hochschulsport bietet jedes Semester rund 50 Kurse an, von Volleyball\nüber Yoga bis Klettern. Die Anmeldung öffnet zwei Wochen nach\nVorlesungsbeginn um 12 Uhr im Sportportal und ist meist schnell voll.", "xy": [0.6783, 0.1885]}, {"datei": "sport.md", "text": "Hochschulsport\nDie meisten Kurse kosten 15 Euro pro Semester. Der Kraftraum im Untergeschoss\nvon Gebäude S ist mit einer Fitnesskarte für 30 Euro pro Semester nutzbar,\nnach einer Einweisung.", "xy": [0.6337, 0.1948]}, {"datei": "wiederholungspruefung.md", "text": "Wiederholungsprüfung\nHabt ihr eine Prüfung nicht bestanden, werdet ihr im folgenden Semester\nautomatisch zur Wiederholung angemeldet. Insgesamt habt ihr drei Versuche.\nDer dritte Versuch findet meistens mündlich statt, die Prüfenden legen den\nTermin mit euch fest. Wer auch den dritten Versuch nicht besteht, verliert\nden Prüfungsanspruch im Studiengang. Vorher lohnt sich ein Termin bei der\nStudienberatung.", "xy": [0.774, 0.6861]}, {"datei": "wlan.md", "text": "WLAN\nAuf dem ganzen Campus funkt eduroam. Ihr meldet euch mit eurer\nHochschul-Mailadresse und dem Passwort eures Hochschulkontos an.\nDie Einrichtung übernimmt am einfachsten die App geteduroam.", "xy": [0.3366, 0.1013]}, {"datei": "wlan.md", "text": "WLAN\nFür Besucherinnen und Besucher gibt es das Netz HTWG-Gast. Ein Tagesticket\ndafür bekommt man am Infopoint im Gebäude A gegen Vorlage eines Ausweises.\nBei Problemen hilft der IT-Service, Raum F-105, Telefon 07531 206-555.", "xy": [0.3578, 0.1295]}], "fragen": [{"frage": "Bis wann hat die Bibliothek am Samstag offen?", "quelle": "bibliothek.md", "typ": "direkt", "xy": [0.0334, 0.2788], "sim": [0.4879, 0.5596, 0.5304, 0.5113, 0.5555, 0.5378, 0.8665, 0.7557, 0.7565, 0.6927, 0.5405, 0.5732, 0.6218, 0.6253, 0.6426, 0.7342, 0.7019, 0.6628, 0.5606, 0.586, 0.474, 0.5442, 0.59, 0.5797, 0.5216, 0.5894, 0.5798, 0.5473, 0.5884, 0.4443, 0.4955, 0.491, 0.4527, 0.5145, 0.5439, 0.5183, 0.5215, 0.5052, 0.6239, 0.5182, 0.5259, 0.5932, 0.5324, 0.5539, 0.5231, 0.5387, 0.5342, 0.6183], "kurz": "Bibliothek Samstag"}, {"frage": "Was zahlt ein Gast in der Mensa für ein Hauptgericht?", "quelle": "mensa.md", "typ": "direkt", "xy": [0.494, 0.1426], "sim": [0.5283, 0.4814, 0.5385, 0.5748, 0.5234, 0.5355, 0.5173, 0.5809, 0.6412, 0.6014, 0.5771, 0.5836, 0.5417, 0.4908, 0.5665, 0.5507, 0.5678, 0.7182, 0.7056, 0.8515, 0.5418, 0.5869, 0.6171, 0.5538, 0.5436, 0.5448, 0.537, 0.5188, 0.4985, 0.5136, 0.5013, 0.4844, 0.5462, 0.5183, 0.5038, 0.5179, 0.4564, 0.4966, 0.594, 0.5238, 0.6242, 0.6133, 0.615, 0.4957, 0.6452, 0.4981, 0.5442, 0.6471], "kurz": "Mensa Gast"}, {"frage": "Wie viel kostet eine Ersatz-Campuskarte?", "quelle": "campuskarte.md", "typ": "direkt", "xy": [0.4697, 0.2669], "sim": [0.5863, 0.5857, 0.5921, 0.6668, 0.5431, 0.5693, 0.5154, 0.6991, 0.6348, 0.575, 0.7684, 0.8575, 0.6842, 0.6097, 0.5406, 0.6282, 0.6152, 0.5121, 0.5316, 0.7413, 0.5945, 0.6363, 0.7329, 0.6397, 0.61, 0.643, 0.5903, 0.5597, 0.5779, 0.5434, 0.5494, 0.5303, 0.5687, 0.5919, 0.5316, 0.59, 0.4731, 0.4927, 0.5781, 0.5844, 0.6861, 0.6929, 0.7538, 0.5518, 0.7272, 0.5877, 0.6104, 0.6468], "kurz": "Ersatzkarte"}, {"frage": "Was regelt Paragraph 17 der Prüfungsordnung?", "quelle": "pruefungsordnung.md", "typ": "kennung", "xy": [0.9214, 0.7741], "sim": [0.6145, 0.5917, 0.5694, 0.5975, 0.5568, 0.5576, 0.5093, 0.5561, 0.5679, 0.5467, 0.6125, 0.5961, 0.534, 0.5649, 0.5102, 0.5198, 0.5404, 0.5073, 0.5238, 0.5917, 0.6033, 0.6962, 0.5196, 0.5196, 0.5752, 0.6143, 0.6323, 0.674, 0.666, 0.7298, 0.7174, 0.7295, 0.8348, 0.7325, 0.6683, 0.6982, 0.5393, 0.5158, 0.553, 0.6094, 0.6154, 0.6284, 0.5339, 0.4979, 0.5435, 0.6506, 0.5183, 0.5158], "kurz": "Paragraph 17"}, {"frage": "Wofür brauche ich das Formular PA-12?", "quelle": "abschlussarbeit.md", "typ": "kennung", "xy": [0.8291, 1.0], "sim": [0.7461, 0.6177, 0.5989, 0.6164, 0.5773, 0.5907, 0.472, 0.5985, 0.5582, 0.5373, 0.6376, 0.6255, 0.5848, 0.59, 0.5758, 0.5335, 0.5429, 0.4997, 0.5745, 0.6047, 0.5423, 0.6232, 0.6163, 0.5702, 0.5999, 0.6407, 0.5893, 0.6179, 0.5932, 0.6365, 0.6688, 0.5226, 0.5434, 0.5381, 0.5432, 0.6294, 0.5334, 0.5075, 0.5682, 0.6031, 0.5622, 0.6123, 0.5807, 0.5444, 0.5786, 0.5509, 0.5476, 0.5928], "kurz": "Formular PA-12"}, {"frage": "Wer sitzt in Raum F-201?", "quelle": "praxissemester.md", "typ": "kennung", "xy": [0.1302, 0.3793], "sim": [0.4894, 0.4873, 0.5734, 0.4957, 0.5907, 0.5505, 0.5877, 0.5569, 0.549, 0.6813, 0.5322, 0.5902, 0.6173, 0.4991, 0.5889, 0.6079, 0.6271, 0.5744, 0.5087, 0.6543, 0.5329, 0.6073, 0.6394, 0.6397, 0.568, 0.508, 0.5882, 0.569, 0.5258, 0.469, 0.5369, 0.4725, 0.5118, 0.548, 0.537, 0.5356, 0.517, 0.6788, 0.6556, 0.5209, 0.5468, 0.5369, 0.5376, 0.4727, 0.5653, 0.4959, 0.5905, 0.6219], "kurz": "Raum F-201"}, {"frage": "Ich bin am Tag meiner Klausur krank. Was muss ich tun?", "quelle": "pruefungsunfaehigkeit.md", "typ": "umschrieben", "xy": [0.4397, 0.5948], "sim": [0.5711, 0.5638, 0.5212, 0.6007, 0.5738, 0.6501, 0.5616, 0.5753, 0.56, 0.4746, 0.5951, 0.6264, 0.5258, 0.5515, 0.507, 0.5718, 0.5825, 0.5644, 0.5977, 0.6129, 0.6217, 0.6065, 0.588, 0.5454, 0.5804, 0.7086, 0.5844, 0.5989, 0.5577, 0.5085, 0.5604, 0.5012, 0.5464, 0.6085, 0.6698, 0.6635, 0.6607, 0.3834, 0.5042, 0.6074, 0.5596, 0.62, 0.5571, 0.5731, 0.57, 0.597, 0.5862, 0.5704], "kurz": "krank am Klausurtag"}, {"frage": "Wo kann ich mein Auto abstellen und was kostet das?", "quelle": "parken.md", "typ": "umschrieben", "xy": [0.3553, 0.2526], "sim": [0.5087, 0.533, 0.4943, 0.5819, 0.5244, 0.5622, 0.5048, 0.6242, 0.6139, 0.5306, 0.5667, 0.6153, 0.6117, 0.6017, 0.6428, 0.5607, 0.5522, 0.5099, 0.5132, 0.6136, 0.4874, 0.5197, 0.6741, 0.6095, 0.4934, 0.523, 0.4609, 0.5151, 0.4616, 0.4825, 0.5069, 0.4454, 0.4939, 0.4954, 0.4728, 0.5141, 0.4486, 0.5325, 0.5558, 0.526, 0.5691, 0.5928, 0.621, 0.4348, 0.5754, 0.4615, 0.5184, 0.566], "kurz": "Auto abstellen"}, {"frage": "Wo kann ich nachts noch lernen?", "quelle": "lernraeume.md", "typ": "umschrieben", "xy": [0.2669, 0.4779], "sim": [0.5372, 0.5398, 0.5445, 0.6025, 0.6166, 0.6153, 0.6303, 0.632, 0.5876, 0.5751, 0.5193, 0.5768, 0.5547, 0.5296, 0.5617, 0.7224, 0.6896, 0.5813, 0.5405, 0.5957, 0.5287, 0.5242, 0.5981, 0.5713, 0.5874, 0.5899, 0.5716, 0.5444, 0.4928, 0.475, 0.4878, 0.5023, 0.4785, 0.5397, 0.4852, 0.5112, 0.4752, 0.4898, 0.6059, 0.5382, 0.509, 0.5612, 0.5562, 0.5587, 0.568, 0.5554, 0.579, 0.5711], "kurz": "nachts lernen"}, {"frage": "Ich bin total gestresst und komme nicht mehr klar. Wer hilft mir?", "quelle": "beratung.md", "typ": "umschrieben", "xy": [0.906, 0.3871], "sim": [0.4717, 0.4778, 0.4272, 0.4524, 0.5774, 0.6797, 0.4292, 0.4963, 0.5021, 0.4166, 0.4561, 0.5065, 0.4388, 0.5025, 0.4672, 0.421, 0.4252, 0.4746, 0.497, 0.494, 0.499, 0.5075, 0.4291, 0.4319, 0.4822, 0.5622, 0.4547, 0.5289, 0.4251, 0.4322, 0.4953, 0.4386, 0.5186, 0.5173, 0.5178, 0.5495, 0.5504, 0.4199, 0.451, 0.5295, 0.488, 0.4929, 0.4178, 0.4188, 0.4187, 0.4991, 0.4871, 0.4804], "kurz": "total gestresst"}, {"frage": "Was passiert, wenn ich das Geld fürs nächste Semester zu spät überweise?", "quelle": "rueckmeldung.md", "typ": "umschrieben", "xy": [0.6688, 0.5041], "sim": [0.582, 0.6035, 0.6183, 0.6716, 0.5461, 0.5977, 0.5, 0.6603, 0.6706, 0.5098, 0.6095, 0.6897, 0.5535, 0.5903, 0.5663, 0.5548, 0.5836, 0.5156, 0.457, 0.6692, 0.6047, 0.6392, 0.6187, 0.5642, 0.6345, 0.6531, 0.6041, 0.564, 0.578, 0.4921, 0.5751, 0.5414, 0.5523, 0.6015, 0.5919, 0.5906, 0.5927, 0.3891, 0.5012, 0.7591, 0.694, 0.8002, 0.6618, 0.5778, 0.6147, 0.6546, 0.5284, 0.5098], "kurz": "Geld zu spät"}, {"frage": "Wie oft darf ich eine Prüfung schreiben, bevor es endgültig vorbei ist?", "quelle": "wiederholungspruefung.md", "typ": "umschrieben", "xy": [0.6219, 0.7956], "sim": [0.5611, 0.6223, 0.4984, 0.5423, 0.4836, 0.5456, 0.4706, 0.5135, 0.5153, 0.4552, 0.4864, 0.5038, 0.4481, 0.5252, 0.4472, 0.4539, 0.4629, 0.4373, 0.4539, 0.4658, 0.6042, 0.6349, 0.4374, 0.4575, 0.5739, 0.6748, 0.5916, 0.6468, 0.6625, 0.5995, 0.6557, 0.6817, 0.6232, 0.6388, 0.6688, 0.6708, 0.5513, 0.3631, 0.3887, 0.5805, 0.5074, 0.6185, 0.4473, 0.5072, 0.4869, 0.7023, 0.3934, 0.4426], "kurz": "wie oft Prüfung"}, {"frage": "Kann ich mit dem Semesterticket ICE fahren?", "quelle": "semesterticket.md", "typ": "direkt", "xy": [0.4704, 0.4458], "sim": [0.5837, 0.571, 0.5885, 0.6627, 0.5608, 0.5548, 0.5004, 0.631, 0.5478, 0.5603, 0.6537, 0.6567, 0.5488, 0.5339, 0.4404, 0.5602, 0.5774, 0.5011, 0.5055, 0.6686, 0.5609, 0.5627, 0.6878, 0.636, 0.6269, 0.5997, 0.6536, 0.5748, 0.5561, 0.4956, 0.5453, 0.4833, 0.5046, 0.5611, 0.5168, 0.5344, 0.478, 0.3894, 0.5126, 0.6077, 0.6107, 0.692, 0.7988, 0.5653, 0.6372, 0.5609, 0.5823, 0.5914], "kurz": "ICE mit Ticket"}, {"frage": "Wann ist die nächste Party der Fachschaft Informatik?", "quelle": null, "typ": "fehlt", "xy": [0.6862, 0.5748], "sim": [0.569, 0.6166, 0.5896, 0.5724, 0.5477, 0.55, 0.5229, 0.5787, 0.5205, 0.5363, 0.5397, 0.5971, 0.5261, 0.5112, 0.506, 0.5648, 0.5775, 0.49, 0.4955, 0.6281, 0.5042, 0.5459, 0.5599, 0.5261, 0.6003, 0.6073, 0.6292, 0.6028, 0.5797, 0.4837, 0.5463, 0.4949, 0.467, 0.5137, 0.5604, 0.5517, 0.6104, 0.457, 0.605, 0.6302, 0.5707, 0.6474, 0.5774, 0.5889, 0.547, 0.6321, 0.5562, 0.6107], "kurz": "Fachschaftsparty"}, {"frage": "Wo kann ich etwas ausdrucken?", "quelle": null, "typ": "extra", "xy": [0.2521, 0.2091], "sim": [0.531, 0.5631, 0.5045, 0.5028, 0.5292, 0.5429, 0.5787, 0.6204, 0.6058, 0.5499, 0.5915, 0.5609, 0.6998, 0.6869, 0.5892, 0.6043, 0.6105, 0.54, 0.5563, 0.5424, 0.5157, 0.5272, 0.5097, 0.5209, 0.5078, 0.54, 0.5114, 0.5294, 0.519, 0.5602, 0.5253, 0.5223, 0.5311, 0.5444, 0.5049, 0.5176, 0.4194, 0.541, 0.631, 0.534, 0.5234, 0.5411, 0.5081, 0.4726, 0.5107, 0.4808, 0.5485, 0.5706], "kurz": "ausdrucken"}, {"frage": "Ich habe meinen Studentenausweis verloren.", "quelle": null, "typ": "extra", "xy": [0.5252, 0.3279], "sim": [0.5743, 0.5413, 0.5511, 0.656, 0.5259, 0.5649, 0.4815, 0.6321, 0.5427, 0.4691, 0.6707, 0.7635, 0.5562, 0.5443, 0.5118, 0.5051, 0.5218, 0.4804, 0.4818, 0.6211, 0.5258, 0.5705, 0.6033, 0.4993, 0.5856, 0.6438, 0.629, 0.6249, 0.5597, 0.5388, 0.6097, 0.5224, 0.5418, 0.5591, 0.5768, 0.6382, 0.5539, 0.4471, 0.5085, 0.666, 0.6194, 0.6578, 0.6554, 0.5146, 0.5514, 0.6558, 0.5906, 0.5433], "kurz": "Ausweis verloren"}, {"frage": "Darf ich in der Klausur schummeln?", "quelle": null, "typ": "extra", "xy": [0.4008, 0.5578], "sim": [0.5741, 0.5672, 0.5484, 0.6175, 0.5989, 0.6101, 0.5624, 0.6314, 0.5762, 0.6068, 0.5913, 0.5855, 0.5841, 0.5605, 0.5541, 0.6114, 0.6295, 0.5416, 0.5145, 0.6602, 0.6286, 0.6252, 0.6041, 0.5512, 0.6124, 0.5931, 0.6238, 0.6098, 0.5374, 0.5919, 0.6022, 0.5734, 0.6439, 0.6302, 0.5858, 0.5756, 0.4936, 0.4824, 0.5775, 0.6193, 0.6057, 0.648, 0.6045, 0.6121, 0.6099, 0.5938, 0.6049, 0.5545], "kurz": "schummeln"}, {"frage": "Wie komme ich auf dem Campus ins Internet?", "quelle": null, "typ": "extra", "xy": [0.3114, 0.0752], "sim": [0.5684, 0.5447, 0.6341, 0.6605, 0.5807, 0.5766, 0.5321, 0.6919, 0.5404, 0.5285, 0.654, 0.6727, 0.6234, 0.5879, 0.531, 0.6806, 0.6424, 0.5343, 0.5333, 0.6914, 0.4871, 0.553, 0.7005, 0.6963, 0.6194, 0.625, 0.6337, 0.5715, 0.5451, 0.4302, 0.4771, 0.4163, 0.4031, 0.4696, 0.4583, 0.4935, 0.4949, 0.4876, 0.6809, 0.602, 0.5823, 0.6274, 0.6469, 0.6179, 0.6261, 0.5717, 0.7691, 0.6856], "kurz": "Internet"}, {"frage": "Mir wird gerade alles zu viel.", "quelle": null, "typ": "extra", "xy": [0.9231, 0.3576], "sim": [0.4795, 0.49, 0.3865, 0.4645, 0.4536, 0.5034, 0.4496, 0.4776, 0.5085, 0.4221, 0.4487, 0.4812, 0.4199, 0.4848, 0.4768, 0.419, 0.4121, 0.4886, 0.5115, 0.4473, 0.4242, 0.4481, 0.3972, 0.441, 0.4562, 0.5224, 0.4377, 0.5026, 0.4612, 0.4679, 0.4954, 0.458, 0.4836, 0.482, 0.4756, 0.509, 0.513, 0.4011, 0.4244, 0.506, 0.4597, 0.49, 0.4416, 0.4506, 0.4534, 0.4781, 0.5069, 0.4285], "kurz": "alles zu viel"}, {"frage": "Kann ich mit dem Ticket nach Hamburg fahren?", "quelle": null, "typ": "extra", "xy": [0.4329, 0.4464], "sim": [0.483, 0.4584, 0.4704, 0.5249, 0.4764, 0.4657, 0.4737, 0.5562, 0.5344, 0.5335, 0.5412, 0.5824, 0.4921, 0.5092, 0.4674, 0.4863, 0.4859, 0.5179, 0.5099, 0.5796, 0.4782, 0.5071, 0.6049, 0.5749, 0.4848, 0.4986, 0.5465, 0.5476, 0.5179, 0.4691, 0.516, 0.4619, 0.4923, 0.4991, 0.5058, 0.5176, 0.4693, 0.3884, 0.4573, 0.5023, 0.4764, 0.5493, 0.6713, 0.4559, 0.5232, 0.4801, 0.4843, 0.6328], "kurz": "Ticket Hamburg"}, {"frage": "Was steht in § 21?", "quelle": null, "typ": "extra", "xy": [0.9818, 0.7592], "sim": [0.592, 0.5967, 0.5508, 0.5559, 0.5843, 0.5679, 0.5416, 0.5947, 0.5833, 0.5574, 0.6099, 0.608, 0.5453, 0.5464, 0.542, 0.5114, 0.5114, 0.5358, 0.5342, 0.6148, 0.5425, 0.6116, 0.5371, 0.4908, 0.5735, 0.5643, 0.6083, 0.6364, 0.6028, 0.6333, 0.6778, 0.6379, 0.6679, 0.7578, 0.6316, 0.6526, 0.5579, 0.5576, 0.5504, 0.5858, 0.5762, 0.6008, 0.5476, 0.48, 0.5306, 0.5692, 0.5378, 0.5752], "kurz": "§ 21"}, {"frage": "Wofür ist das Formular PA-07?", "quelle": null, "typ": "extra", "xy": [0.8553, 0.9883], "sim": [0.6356, 0.5883, 0.5537, 0.5516, 0.5314, 0.5514, 0.4761, 0.5546, 0.552, 0.5481, 0.6189, 0.6077, 0.5584, 0.5737, 0.5659, 0.4939, 0.5084, 0.4992, 0.551, 0.5874, 0.5141, 0.6164, 0.5586, 0.5245, 0.5568, 0.5879, 0.567, 0.6199, 0.6022, 0.637, 0.6171, 0.5319, 0.6092, 0.5656, 0.5684, 0.6619, 0.5246, 0.5129, 0.5505, 0.575, 0.5654, 0.5913, 0.547, 0.4818, 0.5214, 0.5082, 0.5292, 0.5699], "kurz": "PA-07"}, {"frage": "Wo gibt es veganes Essen?", "quelle": null, "typ": "extra", "xy": [0.5036, 0.0], "sim": [0.4614, 0.477, 0.4535, 0.4859, 0.457, 0.4798, 0.5133, 0.5283, 0.5282, 0.5221, 0.4625, 0.4982, 0.4917, 0.4832, 0.5238, 0.5187, 0.5148, 0.5836, 0.7673, 0.5121, 0.4467, 0.4763, 0.4711, 0.503, 0.478, 0.4949, 0.4723, 0.4811, 0.4589, 0.4552, 0.4371, 0.4374, 0.4332, 0.4693, 0.4935, 0.4792, 0.4647, 0.469, 0.5093, 0.4251, 0.424, 0.4449, 0.5046, 0.4948, 0.4876, 0.4489, 0.47, 0.5233], "kurz": "vegan essen"}, {"frage": "Wie lange darf ich ein Buch behalten?", "quelle": null, "typ": "extra", "xy": [0.0, 0.2148], "sim": [0.5242, 0.6066, 0.4471, 0.531, 0.4871, 0.4908, 0.6158, 0.676, 0.6433, 0.5527, 0.5024, 0.5334, 0.527, 0.5655, 0.5812, 0.5254, 0.5182, 0.4925, 0.4803, 0.482, 0.519, 0.5314, 0.4779, 0.426, 0.516, 0.5976, 0.5038, 0.5267, 0.5017, 0.5045, 0.5625, 0.5377, 0.5216, 0.5595, 0.5407, 0.5528, 0.4538, 0.4124, 0.4665, 0.5366, 0.4907, 0.5753, 0.499, 0.4823, 0.4794, 0.5332, 0.4259, 0.4621], "kurz": "Buch behalten"}, {"frage": "Wann muss ich mich für Prüfungen anmelden?", "quelle": null, "typ": "extra", "xy": [0.653, 0.7661], "sim": [0.6324, 0.613, 0.6033, 0.6508, 0.5638, 0.6319, 0.5183, 0.5914, 0.5504, 0.5481, 0.6055, 0.581, 0.5251, 0.5603, 0.5258, 0.5609, 0.5696, 0.5032, 0.5145, 0.596, 0.6395, 0.6858, 0.5949, 0.5505, 0.6506, 0.6595, 0.7708, 0.7319, 0.7741, 0.6703, 0.6758, 0.627, 0.6201, 0.6291, 0.721, 0.7112, 0.6186, 0.4629, 0.5383, 0.6478, 0.5533, 0.6886, 0.5837, 0.6204, 0.5826, 0.7234, 0.5491, 0.6028], "kurz": "Prüfung anmelden"}, {"frage": "Was kostet Yoga beim Hochschulsport?", "quelle": null, "typ": "extra", "xy": [0.651, 0.1639], "sim": [0.6187, 0.5905, 0.5455, 0.6301, 0.5511, 0.5809, 0.4978, 0.6222, 0.606, 0.5378, 0.6023, 0.6274, 0.576, 0.5097, 0.4879, 0.571, 0.6098, 0.4868, 0.5628, 0.7266, 0.6251, 0.6072, 0.6346, 0.6049, 0.6143, 0.6277, 0.6112, 0.5636, 0.5226, 0.5121, 0.4965, 0.4572, 0.5132, 0.5852, 0.5447, 0.5692, 0.5057, 0.4606, 0.5511, 0.5949, 0.6692, 0.6696, 0.6845, 0.8004, 0.8074, 0.5712, 0.5891, 0.5606], "kurz": "Yoga"}]};
+
+const STOPP = new Set("der die das den dem des ein eine einen einer und oder ich mein meine meinen mir mich wir ist sind bin hat habe kann darf muss wie was wo wer wann warum wofür noch mit für von bis auf aus bei zu zum zur im in am an es nicht viel kostet oft total".split(" "));
+
+// ---------------- Suche ----------------
+const dokumente = {};
+DATEN.abschnitte.forEach(a => { (dokumente[a.datei] ||= []).push(a.text); });
+const volltext = Object.fromEntries(Object.entries(dokumente).map(([d, t]) => [d, t.join("\n")]));
+
+function woerter(frage) {
+  return (frage.toLowerCase().match(/[\wäöüß§-]+/g) || []).filter(w => !STOPP.has(w) && w.length > 2);
+}
+function esc(s) { return s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function markiere(text, begriffe) {
+  let html = esc(text);
+  if (!begriffe.length) return html;
+  const re = new RegExp("(" + begriffe.map(b => b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
+  return html.replace(re, "<mark>$1</mark>");
+}
+function grep(frage) {
+  const b = woerter(frage);
+  const liste = [];
+  for (const [datei, text] of Object.entries(volltext)) {
+    const klein = text.toLowerCase();
+    let wert = 0;
+    b.forEach(w => { let i = 0; while ((i = klein.indexOf(w, i)) !== -1) { wert++; i += w.length; } });
+    if (wert > 0) liste.push({datei, wert, text});
+  }
+  liste.sort((x, y) => y.wert - x.wert);
+  return {begriffe: b, liste: liste.slice(0, 4)};
+}
+// BM25: ganze Wörter statt Teilstrings, seltene Wörter zählen mehr (IDF), lange Dateien weniger.
+const TOK = t => t.toLowerCase().match(/[\wäöüß§-]+/g) || [];
+const DOK_TOK = Object.fromEntries(Object.entries(volltext).map(([d, t]) => [d, TOK(t)]));
+const N = Object.keys(DOK_TOK).length;
+const AVGDL = Object.values(DOK_TOK).reduce((s, t) => s + t.length, 0) / N;
+function bm25(frage) {
+  const b = woerter(frage), k1 = 1.2, bb = 0.75;
+  const idf = w => { const n = Object.values(DOK_TOK).filter(t => t.includes(w)).length; return Math.log(1 + (N - n + 0.5) / (n + 0.5)); };
+  const liste = [];
+  for (const [datei, tok] of Object.entries(DOK_TOK)) {
+    let wert = 0;
+    b.forEach(w => { const tf = tok.filter(x => x === w).length; if (tf) wert += idf(w) * tf * (k1 + 1) / (tf + k1 * (1 - bb + bb * tok.length / AVGDL)); });
+    if (wert > 0) liste.push({datei, wert, text: volltext[datei]});
+  }
+  liste.sort((x, y) => y.wert - x.wert);
+  return {begriffe: b, liste: liste.slice(0, 4), idf: Object.fromEntries(b.map(w => [w, idf(w)]))};
+}
+let modusBm25 = false;
+
+function ausschnitt(text, begriffe) {
+  const zeilen = text.split("\n").filter(z => z.trim() && !z.startsWith("#"));
+  const z = zeilen.find(z => begriffe.some(b => z.toLowerCase().includes(b))) || zeilen[0] || "";
+  return markiere(z, begriffe);
+}
+
+let aktuell = null, letzte = null;
+async function suche(frage, vorlage) {
+  letzte = [frage, vorlage];
+  document.getElementById("frage-text").textContent = "„" + frage + "“";
+  const soll = document.getElementById("soll");
+  soll.innerHTML = vorlage && vorlage.quelle ? "richtige Datei: <b>" + vorlage.quelle + "</b>" :
+                   (vorlage && vorlage.typ === "fehlt" ? "steht in keinem Dokument" : "");
+  const g = modusBm25 ? bm25(frage) : grep(frage);
+  document.getElementById("grep-woerter").textContent = !g.begriffe.length ? "keine Suchwörter übrig" : modusBm25 ?
+    "ganze Wörter, Gewicht (IDF): " + g.begriffe.map(w => w + " " + g.idf[w].toFixed(1)).join(" · ") :
+    "gesucht: " + g.begriffe.map(w => '"' + w + '"').join(" ") + " · auch als Wortteil · Treffer gezählt";
+  const max = Math.max(1, ...g.liste.map(t => t.wert));
+  document.getElementById("grep-liste").innerHTML = g.liste.length ? g.liste.map(t => `
+    <div class="treffer ${vorlage && t.datei === vorlage.quelle ? "richtig" : ""}">
+      <div class="kopf"><span class="datei">${t.datei}</span><span>${modusBm25 ? t.wert.toFixed(2) : t.wert + " Treffer"}</span></div>
+      <div class="balken" style="width:${100 * t.wert / max}%"></div>
+      <div class="text">${ausschnitt(t.text, g.begriffe)}</div>
+    </div>`).join("") : '<div class="leer">Kein einziges Dokument enthält eines dieser Wörter.</div>';
+
+  let sims = vorlage ? vorlage.sim : null;
+  const info = document.getElementById("emb-info");
+  if (!sims) {
+    info.textContent = "frage lokales Ollama …";
+    sims = await liveSims(frage);
+  }
+  if (!sims) {
+    info.textContent = "";
+    document.getElementById("emb-liste").innerHTML = '<div class="leer">Für eigene Fragen braucht diese Seite ein laufendes Ollama mit ' + DATEN.modell + ' (localhost:11434). Die vorbereiteten Fragen oben funktionieren immer.</div>';
+    return;
+  }
+  info.textContent = "Kosinus-Ähnlichkeit zur Frage · Top 4 von " + DATEN.abschnitte.length + " Abschnitten · " + DATEN.modell;
+  const top = sims.map((s, i) => ({s, i})).sort((a, b) => b.s - a.s).slice(0, 4);
+  document.getElementById("emb-liste").innerHTML = top.map(({s, i}) => {
+    const a = DATEN.abschnitte[i];
+    const zeilen = a.text.split("\n"); const rumpf = zeilen.slice(1).join(" ").replace(/^## /, "");
+    return `<div class="treffer ${vorlage && a.datei === vorlage.quelle ? "richtig" : ""}">
+      <div class="kopf"><span class="datei">${a.datei}</span><span>${s.toFixed(3)}</span></div>
+      <div class="balken" style="width:${Math.max(4, (s - 0.3) / 0.6 * 100)}%"></div>
+      <div class="text">${esc(rumpf)}</div></div>`;
+  }).join("");
+}
+
+async function liveSims(frage) {
+  try {
+    const r = await fetch("http://localhost:11434/api/embed", {method: "POST", body: JSON.stringify({model: DATEN.modell, input: [frage]})});
+    if (!r.ok) return null;
+    const q = (await r.json()).embeddings[0];
+    if (!window.ABSCHNITT_VEKTOREN) {
+      const r2 = await fetch("http://localhost:11434/api/embed", {method: "POST", body: JSON.stringify({model: DATEN.modell, input: DATEN.abschnitte.map(a => a.text)})});
+      window.ABSCHNITT_VEKTOREN = (await r2.json()).embeddings;
+    }
+    const norm = v => Math.sqrt(v.reduce((s, x) => s + x * x, 0));
+    const nq = norm(q);
+    return window.ABSCHNITT_VEKTOREN.map(v => v.reduce((s, x, i) => s + x * q[i], 0) / (norm(v) * nq));
+  } catch (e) { return null; }
+}
+
+function knoepfe(ziel, beiKlick) {
+  const box = document.getElementById(ziel);
+  DATEN.fragen.forEach((f, i) => {
+    const b = document.createElement("button");
+    b.textContent = f.kurz;
+    b.title = f.frage;
+    if (f.typ === "umschrieben") b.classList.add("umschrieben");
+    if (f.typ === "kennung") b.classList.add("kennung");
+    if (f.typ === "fehlt") b.classList.add("fehlt");
+    b.addEventListener("click", () => {
+      box.querySelectorAll("button").forEach(x => x.classList.remove("aktiv"));
+      b.classList.add("aktiv"); beiKlick(f, i);
+    });
+    box.append(b);
+  });
+}
+
+// ---------------- Karte ----------------
+const FARBEN = ["#6d28d9","#e65100","#15803d","#0369a1","#be185d","#a16207","#0f766e","#7c2d12","#4338ca","#b91c1c","#065f46"];
+const dateien = Object.keys(dokumente);
+const farbe = d => `hsl(${Math.round(dateien.indexOf(d) * 137.5) % 360}, 70%, ${dateien.indexOf(d) % 2 ? 38 : 46}%)`;
+const X = xy => 40 + xy[0] * 920, Y = xy => 30 + xy[1] * 560;
+function karteZeichnen(frage) {
+  const svg = document.getElementById("punkte");
+  let s = "";
+  let top = [];
+  if (frage) {
+    top = frage.sim.map((v, i) => ({v, i})).sort((a, b) => b.v - a.v).slice(0, 4);
+    top.forEach(({i}) => { const a = DATEN.abschnitte[i];
+      s += `<line x1="${X(frage.xy)}" y1="${Y(frage.xy)}" x2="${X(a.xy)}" y2="${Y(a.xy)}" stroke="#e65100" stroke-width="2.5" stroke-dasharray="6 4"/>`; });
+  }
+  DATEN.abschnitte.forEach((a, i) => {
+    const t = top.some(x => x.i === i);
+    s += `<circle cx="${X(a.xy)}" cy="${Y(a.xy)}" r="${t ? 11 : 8}" fill="${farbe(a.datei)}" fill-opacity="${frage && !t ? 0.35 : 0.85}" stroke="${t ? "#e65100" : "#fff"}" stroke-width="${t ? 3 : 1.5}" data-i="${i}"><title>${esc(a.datei)}</title></circle>`;
+  });
+  const gesehen = new Set();
+  DATEN.abschnitte.forEach(a => { if (gesehen.has(a.datei)) return; gesehen.add(a.datei);
+    s += `<text x="${X(a.xy) + 12}" y="${Y(a.xy) - 10}" font-size="15" fill="${farbe(a.datei)}" font-weight="600">${a.datei.replace(".md", "")}</text>`; });
+  if (frage) {
+    s += `<rect x="${X(frage.xy) - 12}" y="${Y(frage.xy) - 12}" width="24" height="24" rx="4" fill="#e65100" stroke="#fff" stroke-width="2" transform="rotate(45 ${X(frage.xy)} ${Y(frage.xy)})"/>`;
+  }
+  svg.innerHTML = s;
+  svg.querySelectorAll("circle").forEach(c => c.addEventListener("mouseenter", () => zeigeAbschnitt(+c.dataset.i, frage)));
+  const info = document.getElementById("karte-info");
+  if (frage) {
+    info.innerHTML = `<h3>„${esc(frage.frage)}“</h3>` + (frage.quelle ? `<div class="soll">richtig: <b>${frage.quelle}</b></div>` : "") +
+      top.map(({v, i}) => `<div class="treffer ${DATEN.abschnitte[i].datei === frage.quelle ? "richtig" : ""}"><div class="kopf"><span class="datei">${DATEN.abschnitte[i].datei}</span><span>${v.toFixed(3)}</span></div></div>`).join("") +
+      `<p class="legende" style="margin-top:6px">Gestrichelt: die vier ähnlichsten Abschnitte im echten Raum mit 768 Dimensionen. Die Karte drückt diesen Raum auf zwei Dimensionen zusammen (t-SNE), Abstände auf der Karte stimmen deshalb nur ungefähr.</p>`;
+  } else {
+    info.innerHTML = `<h3>Jeder Punkt ist ein Abschnitt</h3><p>Abschnitte mit ähnlicher Bedeutung liegen nah beieinander, auch wenn sie keine Wörter teilen. Fahrt mit der Maus über einen Punkt. Wählt oben eine Frage: Sie landet als Raute in der Nachbarschaft ihrer Antwort, hoffentlich.</p><p class="legende" style="margin-top:6px">${DATEN.abschnitte.length} Abschnitte aus ${dateien.length} Dateien · ${DATEN.modell} · 768 Dimensionen, für die Karte auf zwei zusammengedrückt (t-SNE)</p>`;
+  }
+}
+function zeigeAbschnitt(i, frage) {
+  const a = DATEN.abschnitte[i];
+  const info = document.getElementById("karte-info");
+  const alt = info.querySelector(".hover"); if (alt) alt.remove();
+  const d = document.createElement("div"); d.className = "treffer hover"; d.style.marginTop = "8px";
+  d.innerHTML = `<div class="kopf"><span class="datei">${a.datei}</span>${frage ? "<span>" + frage.sim[i].toFixed(3) + "</span>" : ""}</div><div class="text" style="max-height:none">${esc(a.text)}</div>`;
+  info.append(d);
+}
+
+// ---------------- Chunking ----------------
+const ROH = "# Rücktritt aus gesundheitlichen Gründen\n\n## Wann gilt das?\nWer an einem Prüfungstag aus gesundheitlichen Gründen nicht antreten kann\noder eine Prüfung deshalb abbricht, gilt als prüfungsunfähig. Die Prüfung\nwird dann nicht als Fehlversuch gewertet, wenn der Grund rechtzeitig\nnachgewiesen wird.\n\n## Nachweis\nNötig ist ein ärztliches Attest, das die Prüfungsunfähigkeit am Prüfungstag\nbestätigt. Eine einfache Arbeitsunfähigkeitsbescheinigung reicht nicht.\nDas Attest muss innerhalb von drei Werktagen nach dem Prüfungstermin beim\nPrüfungsamt eingehen, zusammen mit dem Formular PA-07\n„Antrag auf Anerkennung der Prüfungsunfähigkeit“.\n\n## Danach\nIhr werdet automatisch zum nächsten regulären Termin angemeldet.\n";
+const FAKT = "Das Attest muss innerhalb von drei Werktagen nach dem Prüfungstermin";
+let nachUeberschrift = false;
+function zerlegen(text, groesse, overlap) {
+  if (nachUeberschrift) {
+    const teile = []; let start = 0;
+    const re = /\n(?=## )/g; let m;
+    while ((m = re.exec(text))) { teile.push([start, m.index]); start = m.index + 1; }
+    teile.push([start, text.length]); return teile;
+  }
+  const teile = []; let start = 0;
+  while (start < text.length) { const ende = Math.min(text.length, start + groesse); teile.push([start, ende]); if (ende === text.length) break; start = ende - overlap; }
+  return teile;
+}
+function chunkingZeichnen() {
+  const g = +document.getElementById("groesse").value, o = Math.min(+document.getElementById("overlap").value, g - 10);
+  document.getElementById("groesse-w").textContent = g; document.getElementById("overlap-w").textContent = o;
+  document.getElementById("nach-ueberschrift").classList.toggle("aktiv", nachUeberschrift);
+  const teile = zerlegen(ROH, g, o);
+  // pro Zeichen: welcher Chunk (erster), Überlappung?
+  const zu = new Array(ROH.length).fill(-1), anzahl = new Array(ROH.length).fill(0);
+  teile.forEach(([a, b], k) => { for (let i = a; i < b; i++) { if (zu[i] < 0) zu[i] = k; anzahl[i]++; } });
+  const fa = ROH.indexOf(FAKT), fb = fa + FAKT.length;
+  let html = "", i = 0;
+  while (i < ROH.length) {
+    let j = i; while (j < ROH.length && zu[j] === zu[i] && (anzahl[j] > 1) === (anzahl[i] > 1) && (j >= fa && j < fb) === (i >= fa && i < fb)) j++;
+    const cls = "ch ch" + (zu[i] % 5) + (anzahl[i] > 1 ? " ueberlapp" : "") + (i >= fa && i < fb ? " fakt" : "");
+    html += `<span class="${cls}">${esc(ROH.slice(i, j))}</span>`; i = j;
+  }
+  document.getElementById("chunks").innerHTML = html;
+  const ganz = teile.some(([a, b]) => a <= fa && b >= fb);
+  const st = document.getElementById("chunk-status");
+  st.className = "status " + (ganz ? "gut" : "schlecht");
+  st.innerHTML = `<b>${teile.length} Abschnitte.</b> ` + (ganz ? "Der Satz mit der Frist steht vollständig in einem Abschnitt." :
+    "Der Satz mit der Frist ist zerschnitten. Kein Abschnitt enthält ihn ganz: Ein Abschnitt kennt die Frist, ein anderer, wofür sie gilt.");
+}
+
+document.getElementById("b-grep").addEventListener("click", () => { modusBm25 = false; umschalten(); });
+document.getElementById("b-bm25").addEventListener("click", () => { modusBm25 = true; umschalten(); });
+function umschalten() {
+  document.getElementById("b-grep").classList.toggle("aktiv", !modusBm25);
+  document.getElementById("b-bm25").classList.toggle("aktiv", modusBm25);
+  document.getElementById("grep-titel").textContent = modusBm25 ? "BM25" : "grep";
+  if (letzte) suche(...letzte);
+}
+
+// ---------------- Start ----------------
+let gewaehlt = null;
+function modus() {
+  const m = gewaehlt || (location.hash || "#suche").slice(1).split("?")[0] || "suche";
+  document.querySelectorAll(".modus").forEach(s => s.classList.toggle("an", s.id === "m-" + m));
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("aktiv", b.dataset.m === m));
+}
+// Im Labor eingebettet: Reiter statt Hash
+if (window.MIT_REITERN) {
+  const t = document.getElementById("tabs"); t.style.display = "flex";
+  t.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { gewaehlt = b.dataset.m; modus(); }));
+  document.querySelectorAll(".modus").forEach(s => s.style.height = "calc(100% - 40px)");
+}
+window.addEventListener("hashchange", modus);
+modus();
+knoepfe("vorlagen", f => suche(f.frage, f));
+knoepfe("vorlagen-karte", f => karteZeichnen(f));
+document.getElementById("eingabe").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.value.trim()) {
+  document.querySelectorAll("#vorlagen button").forEach(x => x.classList.remove("aktiv")); suche(e.target.value.trim(), null); } });
+const start = DATEN.fragen.findIndex(f => f.typ === "umschrieben");
+document.querySelectorAll("#vorlagen button")[start].click();
+karteZeichnen(null);
+// Für Screenshots: #karte?Auto abstellen wählt eine Frage vor
+const vorwahl = decodeURIComponent((location.hash.split("?")[1] || ""));
+if (vorwahl) { const ziel = location.hash.startsWith("#karte") ? "#vorlagen-karte" : "#vorlagen";
+  const b = [...document.querySelectorAll(ziel + " button")].find(x => x.textContent === vorwahl); if (b) b.click(); }
+["groesse", "overlap"].forEach(id => document.getElementById(id).addEventListener("input", () => { nachUeberschrift = false; chunkingZeichnen(); }));
+document.getElementById("nach-ueberschrift").addEventListener("click", () => { nachUeberschrift = !nachUeberschrift; chunkingZeichnen(); });
+chunkingZeichnen();
+
+// In den Folien als iframe: Fokus nach Klicks zurück an die Folien, damit Pfeiltasten weiterblättern.
+function fokusZurueck(e) { if (window.parent !== window && !["INPUT","TEXTAREA"].includes(e.target.tagName)) { try { window.parent.focus(); } catch (_) {} } }
+document.addEventListener("click", e => { if (e.target.closest("button")) setTimeout(() => fokusZurueck(e), 0); });
+document.addEventListener("keydown", e => { if (["PageDown","PageUp","ArrowRight","ArrowLeft"].includes(e.key) && e.target.tagName !== "INPUT") fokusZurueck(e); });
+</script>
+</body>
+</html>
